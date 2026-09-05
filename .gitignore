@@ -1,0 +1,14 @@
+.agents/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.db
+*.sqlite3
+.playwright-mcp/
+.pytest_cache/
+.coverage
+dist/
+build/
+*.egg-info/
