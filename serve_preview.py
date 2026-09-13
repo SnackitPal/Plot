@@ -266,8 +266,25 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                         break
             return
 
-        # Root / Index HTML handler (prevent 304 navigation failure in Service Worker)
-        if path in ("", "/index.html", "/preview", "/preview/index.html"):
+        # Landing Page (Root index.html)
+        if path in ("", "/index.html"):
+            landing_path = os.path.join(ROOT_DIR, "index.html")
+            if os.path.exists(landing_path):
+                with open(landing_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.send_header("Pragma", "no-cache")
+                self.send_header("Expires", "0")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+        # Full Cultural Atlas App (Preview index.html)
+        if path in ("/preview", "/preview/index.html"):
             index_path = os.path.join(PREVIEW_DIR, "index.html")
             if os.path.exists(index_path):
                 with open(index_path, "rb") as f:
@@ -290,8 +307,22 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             return
 
-        # PWA Manifest: GET /manifest.json
-        if path == "/manifest.json":
+        # PWA Icon: GET /icon.svg or /preview/icon.svg
+        if path in ("/icon.svg", "/preview/icon.svg"):
+            icon_path = os.path.join(PREVIEW_DIR, "icon.svg")
+            if os.path.exists(icon_path):
+                with open(icon_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/svg+xml")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+        # PWA Manifest: GET /manifest.json or /preview/manifest.json
+        if path in ("/manifest.json", "/preview/manifest.json"):
             manifest_path = os.path.join(PREVIEW_DIR, "manifest.json")
             if os.path.exists(manifest_path):
                 with open(manifest_path, "rb") as f:

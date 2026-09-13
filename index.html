@@ -1,53 +1,842 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0; url=preview/">
-  <title>PLOT: The Cultural Atlas</title>
-  <script>
-    // Immediate redirect to preview app for GitHub Pages
-    window.location.replace("preview/");
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PLOT — The Cultural Atlas of Human Disagreement</title>
+  
+  <!-- SEO & Social Graph Metadata -->
+  <meta name="description" content="Where humanity diverges—and where human consensus quietly holds. An archival deliberative cartography platform mapping human moral disagreement across 19 macro-regions.">
+  <meta property="og:title" content="PLOT — The Cultural Atlas">
+  <meta property="og:description" content="An interactive cartography platform mapping global moral disagreement, empirical social benchmarks, and cultural friction.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://snackitpal.github.io/Plot/">
+  <meta name="theme-color" content="#FAF6EE">
+
+  <!-- PWA & Mobile Icons -->
+  <link rel="manifest" href="preview/manifest.json">
+  <link rel="apple-touch-icon" href="preview/icon.svg">
+
+  <!-- Tailwind CSS Engine -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+
+  <!-- Typography: Cinzel, Fraunces, Plus Jakarta Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --canvas: #FAF6EE;
+      --canvas-surface: #F4EFE6;
+      --card-bg: #FCFAF7;
+      --ink: #18181B;
+      --ink-muted: #6B665E;
+      --border-subtle: #D5CFC4;
+      
+      --accent-terracotta: #C85A17;
+      --accent-prussian: #003153;
+      --accent-sage: #2E6F40;
+      --accent-amethyst: #6E3667;
+      --accent-ochre: #E89D35;
+      --accent-amber-light: #FFF3B0;
+    }
+
     body {
-      background-color: #FAF6EE;
-      color: #1A1A24;
-      font-family: 'JetBrains Mono', monospace, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
+      background-color: var(--canvas);
+      color: var(--ink);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      min-height: 100dvh;
     }
-    .card {
-      background: #FCFAF7;
-      border: 2px solid #1A1A24;
-      padding: 2rem 3rem;
-      border-radius: 1rem;
-      box-shadow: 4px 4px 0 #1A1A24;
+
+    .font-masthead { font-family: 'Cinzel', serif; letter-spacing: 0.06em; }
+    .font-editorial { font-family: 'Fraunces', Georgia, serif; }
+
+    /* Tactile Neobrutalist Physics */
+    .tactile-btn {
+      border: 2px solid var(--ink);
+      box-shadow: 0 4px 0 var(--ink);
+      transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.08s ease, background-color 0.15s ease;
+      touch-action: manipulation;
+      user-select: none;
     }
-    h1 {
-      font-family: serif;
-      margin-bottom: 0.5rem;
+    @media (hover: hover) and (pointer: fine) {
+      .tactile-btn:hover {
+        transform: translateY(-1.5px);
+        box-shadow: 0 5.5px 0 var(--ink);
+      }
     }
-    a {
-      color: #C85A17;
-      font-weight: bold;
-      text-decoration: none;
+    .tactile-btn:active, .tactile-btn.is-active {
+      transform: translateY(2px) !important;
+      box-shadow: 0 1px 0 var(--ink) !important;
     }
-    a:hover {
-      text-decoration: underline;
+
+    .tactile-card {
+      border: 2px solid var(--ink);
+      box-shadow: 0 4px 0 var(--ink);
+      background-color: var(--card-bg);
+      border-radius: 18px;
+    }
+
+    .tactile-pill {
+      border: 2px solid var(--ink);
+      box-shadow: 0 2px 0 var(--ink);
+      border-radius: 9999px;
+    }
+
+    /* Option Card Interactive Button */
+    .option-btn {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease;
+    }
+    .option-btn.is-voted {
+      border-width: 2.5px;
+      box-shadow: 0 2px 0 var(--ink) !important;
+      background-color: #FFF9ED;
+    }
+    .vote-fill-bar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1;
+    }
+
+    /* Antique Parchment Texture & Subtle Grid */
+    .archival-grid {
+      background-image: radial-gradient(#18181B 0.75px, transparent 0.75px);
+      background-size: 24px 24px;
+      background-position: 0 0;
+    }
+
+    .editorial-dropcap::first-letter {
+      font-family: 'Cinzel', serif;
+      font-size: 3.8rem;
+      line-height: 0.8;
+      float: left;
+      margin-top: 0.15em;
+      margin-right: 0.18em;
+      color: var(--accent-terracotta);
+      font-weight: 800;
+    }
+
+    /* Graticule & Pen-Draw Lines */
+    .graticule-rule {
+      border-top: 1px dashed #D5CFC4;
     }
   </style>
 </head>
-<body>
-  <div class="card">
-    <h1>PLOT</h1>
-    <p>THE CULTURAL ATLAS</p>
-    <p>Loading interactive experience... If not redirected, <a href="preview/">click here</a>.</p>
-  </div>
+<body class="selection:bg-[#FFE57F] selection:text-[var(--ink)]">
+
+  <!-- ===================================================================== -->
+  <!-- TOP APP BAR / EDITORIAL MASTHEAD                                      -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-50 bg-[#FAF6EE]/95 backdrop-blur-md border-b-2 border-[var(--ink)] px-4 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Brand Lockup -->
+      <a href="preview/" class="flex items-center gap-2.5 group">
+        <div class="w-9 h-9 tactile-card flex items-center justify-center bg-[var(--ink)] text-[#FAF6EE] shrink-0 rounded-xl shadow-[2px_2px_0_var(--ink)] group-hover:bg-[#C85A17] transition-colors">
+          <!-- Nautical Astrolabe Icon -->
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9" stroke="#E89D35" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="4" stroke="#FAF6EE" stroke-width="1.2" stroke-dasharray="2,2"/>
+            <line x1="12" y1="3" x2="12" y2="21" stroke="#FAF6EE" stroke-width="1.5"/>
+            <line x1="3" y1="12" x2="21" y2="12" stroke="#FAF6EE" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="1.5" fill="#E89D35"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-masthead font-black text-xl md:text-2xl tracking-wide leading-none text-[var(--ink)]">PLOT</span>
+            <span class="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 tactile-pill bg-[#FCFAF7] font-bold text-gray-700 uppercase tracking-widest border border-[var(--ink)]">THE CULTURAL ATLAS</span>
+          </div>
+          <p class="text-[10px] font-mono text-gray-500 hidden lg:block leading-none mt-0.5">Where humanity diverges—and consensus quietly holds.</p>
+        </div>
+      </a>
+
+      <!-- Center Telemetry Ribbon (Desktop) -->
+      <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-[#FCFAF7] border border-[#D5CFC4] rounded-full text-[11px] font-mono text-gray-600 shadow-2xs">
+        <span class="w-2 h-2 rounded-full bg-[#C85A17] animate-pulse"></span>
+        <span>VOL. I • DAILY DELIBERATION</span>
+        <span class="text-gray-400">|</span>
+        <span class="font-bold text-[var(--ink)]">14,820</span> <span>Participants</span>
+        <span class="text-gray-400">|</span>
+        <span class="text-[#2E6F40] font-bold">19 Macro-Regions</span>
+      </div>
+
+      <!-- Right Actions: Secondary Links + Primary Launch App CTA -->
+      <div class="flex items-center gap-2.5">
+        <a href="#three-pillars" class="hidden sm:inline-block text-xs font-mono font-bold text-gray-700 hover:text-[var(--ink)] px-2.5 py-1">Pillars</a>
+        <a href="#empirical-rigor" class="hidden sm:inline-block text-xs font-mono font-bold text-gray-700 hover:text-[var(--ink)] px-2.5 py-1">Methodology</a>
+        <a href="#cartogram-showcase" class="hidden sm:inline-block text-xs font-mono font-bold text-gray-700 hover:text-[var(--ink)] px-2.5 py-1">Atlas</a>
+        
+        <a href="preview/" onclick="playTactileClick()" class="tactile-btn px-4 py-2 bg-[#C85A17] hover:bg-[#B34E12] text-white rounded-xl text-xs md:text-sm font-display font-bold flex items-center gap-1.5 shadow-[0_3px_0_var(--ink)]">
+          <span>Launch Atlas</span>
+          <span class="text-xs">➔</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- HERO SECTION WITH LIVE INTERACTIVE DILEMMA ARTIFACT                   -->
+  <!-- ===================================================================== -->
+  <section class="relative pt-10 md:pt-16 pb-16 md:pb-24 px-4 overflow-hidden border-b-2 border-[var(--ink)]">
+    <!-- Subtle Background Archival Grid -->
+    <div class="absolute inset-0 archival-grid opacity-15 pointer-events-none"></div>
+
+    <div class="max-w-5xl mx-auto relative z-10 text-center space-y-6">
+      
+      <!-- Archival Folio Pill -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 tactile-pill bg-[#FFF3B0] text-xs font-mono font-bold uppercase tracking-wider shadow-xs">
+        <span class="w-2 h-2 rounded-full bg-[#C85A17]"></span>
+        <span>CIVIC CARTOGRAPHY & DELIBERATIVE ATLAS • VOL. I</span>
+      </div>
+
+      <!-- Main Editorial Headline -->
+      <h1 class="font-editorial font-extrabold text-3xl sm:text-5xl md:text-6xl text-[var(--ink)] tracking-tight leading-[1.1] max-w-4xl mx-auto">
+        Where Humanity Diverges—<br class="hidden sm:inline">
+        And Where Consensus Quietly Holds.
+      </h1>
+
+      <!-- Epistemic Subtitle -->
+      <p class="font-sans text-base sm:text-lg md:text-xl text-[var(--ink-muted)] max-w-2xl mx-auto leading-relaxed">
+        An interactive atlas mapping human moral trade-offs, empirical social benchmarks, and cultural friction across 19 macro-regions. Deliberation over doomscrolling.
+      </p>
+
+      <!-- Top Action Group -->
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <a href="preview/" onclick="playTactileClick()" class="tactile-btn px-6 py-3.5 bg-[var(--ink)] text-white hover:bg-black rounded-xl text-sm md:text-base font-display font-bold flex items-center gap-2 shadow-[0_4px_0_var(--ink)]">
+          <span>Enter Today's Slate in Full App</span>
+          <span>➔</span>
+        </a>
+        <a href="#cartogram-showcase" class="tactile-btn px-5 py-3.5 bg-white text-[var(--ink)] hover:bg-gray-50 rounded-xl text-sm md:text-base font-display font-bold flex items-center gap-2 shadow-[0_4px_0_var(--ink)]">
+          <span>Explore World Map</span>
+          <span>↓</span>
+        </a>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- LIVE INTERACTIVE DILEMMA ARTIFACT (OPENAI / LINEAR INSPIRED SANDBOX) -->
+      <!-- =================================================================== -->
+      <div class="pt-8 max-w-3xl mx-auto text-left">
+        <div class="tactile-card p-5 sm:p-7 md:p-8 bg-[#FAF6EE] relative shadow-[0_6px_0_var(--ink)]">
+          
+          <!-- Sandbox Badge Header -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-3 border-b border-[#D5CFC4]">
+            <div class="flex items-center gap-2">
+              <span class="tactile-pill px-2.5 py-0.5 bg-[#FFF3B0] text-[10px] font-mono font-bold uppercase">
+                ⚡ Live Interactive Dilemma
+              </span>
+              <span class="text-[11px] font-mono text-gray-500 hidden sm:inline-block">Cast a vote to reveal humanity's fault line</span>
+            </div>
+            
+            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#E8F0FE] border border-[#AECBFA] text-[#1967D2] text-[10px] font-mono font-bold">
+              <span>🏛️ PEW RESEARCH BENCHMARK</span>
+              <span class="opacity-80">(n = 24,500)</span>
+            </div>
+          </div>
+
+          <!-- Dilemma Prompt -->
+          <h2 class="font-editorial font-bold text-xl sm:text-2xl md:text-3xl text-[var(--ink)] leading-snug mb-5 tracking-tight">
+            "Would you accept a 30% pay cut if it guaranteed you would never have to commute again?"
+          </h2>
+
+          <!-- 4 Interactive Option Buttons -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="hero-options-grid">
+            
+            <!-- Option A -->
+            <button type="button" onclick="voteHero('A')" id="hero-btn-A" class="tactile-btn option-btn p-3.5 sm:p-4 rounded-xl text-left bg-white flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_3px_0_var(--ink)]">
+              <div class="vote-fill-bar bg-[#FFE57F]/50 border-r-2 border-[var(--ink)]" id="hero-fill-A" style="width: 0%;"></div>
+              <div class="flex items-center gap-2.5 relative z-10 flex-1 min-w-0 pr-2">
+                <span class="w-7 h-7 rounded-full border border-[var(--ink)] bg-[#E66101] text-white flex items-center justify-center font-bold text-xs shrink-0">●</span>
+                <span class="font-semibold text-xs sm:text-sm text-[var(--ink)] leading-tight">Yes, without hesitation.</span>
+              </div>
+              <div class="flex items-center gap-1.5 relative z-10 shrink-0">
+                <span id="hero-pct-A" class="hidden font-mono font-extrabold text-xs sm:text-sm text-[var(--ink)]">54%</span>
+                <span class="font-mono text-xs font-bold text-gray-400">A</span>
+              </div>
+            </button>
+
+            <!-- Option B -->
+            <button type="button" onclick="voteHero('B')" id="hero-btn-B" class="tactile-btn option-btn p-3.5 sm:p-4 rounded-xl text-left bg-white flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_3px_0_var(--ink)]">
+              <div class="vote-fill-bar bg-[#BAE6FD]/50 border-r-2 border-[var(--ink)]" id="hero-fill-B" style="width: 0%;"></div>
+              <div class="flex items-center gap-2.5 relative z-10 flex-1 min-w-0 pr-2">
+                <span class="w-7 h-7 rounded-full border border-[var(--ink)] bg-[#00B4D8] text-white flex items-center justify-center font-bold text-xs shrink-0">▲</span>
+                <span class="font-semibold text-xs sm:text-sm text-[var(--ink)] leading-tight">No, income comes first.</span>
+              </div>
+              <div class="flex items-center gap-1.5 relative z-10 shrink-0">
+                <span id="hero-pct-B" class="hidden font-mono font-extrabold text-xs sm:text-sm text-[var(--ink)]">24%</span>
+                <span class="font-mono text-xs font-bold text-gray-400">B</span>
+              </div>
+            </button>
+
+            <!-- Option C -->
+            <button type="button" onclick="voteHero('C')" id="hero-btn-C" class="tactile-btn option-btn p-3.5 sm:p-4 rounded-xl text-left bg-white flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_3px_0_var(--ink)]">
+              <div class="vote-fill-bar bg-[#A7F3D0]/50 border-r-2 border-[var(--ink)]" id="hero-fill-C" style="width: 0%;"></div>
+              <div class="flex items-center gap-2.5 relative z-10 flex-1 min-w-0 pr-2">
+                <span class="w-7 h-7 rounded-full border border-[var(--ink)] bg-[#06D6A0] text-white flex items-center justify-center font-bold text-xs shrink-0">■</span>
+                <span class="font-semibold text-xs sm:text-sm text-[var(--ink)] leading-tight">Only if commute was &gt;60 mins.</span>
+              </div>
+              <div class="flex items-center gap-1.5 relative z-10 shrink-0">
+                <span id="hero-pct-C" class="hidden font-mono font-extrabold text-xs sm:text-sm text-[var(--ink)]">14%</span>
+                <span class="font-mono text-xs font-bold text-gray-400">C</span>
+              </div>
+            </button>
+
+            <!-- Option D -->
+            <button type="button" onclick="voteHero('D')" id="hero-btn-D" class="tactile-btn option-btn p-3.5 sm:p-4 rounded-xl text-left bg-white flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_3px_0_var(--ink)]">
+              <div class="vote-fill-bar bg-[#E9D5FF]/50 border-r-2 border-[var(--ink)]" id="hero-fill-D" style="width: 0%;"></div>
+              <div class="flex items-center gap-2.5 relative z-10 flex-1 min-w-0 pr-2">
+                <span class="w-7 h-7 rounded-full border border-[var(--ink)] bg-[#B5179E] text-white flex items-center justify-center font-bold text-xs shrink-0">◆</span>
+                <span class="font-semibold text-xs sm:text-sm text-[var(--ink)] leading-tight">I prefer office life.</span>
+              </div>
+              <div class="flex items-center gap-1.5 relative z-10 shrink-0">
+                <span id="hero-pct-D" class="hidden font-mono font-extrabold text-xs sm:text-sm text-[var(--ink)]">8%</span>
+                <span class="font-mono text-xs font-bold text-gray-400">D</span>
+              </div>
+            </button>
+
+          </div>
+
+          <!-- Post-Vote Dynamic Consensus Reveal -->
+          <div id="hero-post-vote-banner" class="hidden mt-4 p-3.5 bg-white border-2 border-[var(--ink)] rounded-xl space-y-2 text-xs font-mono">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-emerald-800 font-bold">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>BALLOT LOCKED • REGIONAL FAULT LINE REVEALED:</span>
+              </div>
+              <span class="text-gray-400 text-[10px]">84,329 total ballots</span>
+            </div>
+            <p class="font-sans text-xs text-gray-700">
+              <strong>US West</strong> and the <strong>Nordics</strong> favor remote autonomy (58% Option A), whereas <strong>East Asia</strong> and <strong>South Asia</strong> heavily prioritize physical collaboration and financial progression (62% combined B & D).
+            </p>
+            <div class="pt-1 flex items-center justify-between">
+              <a href="preview/" onclick="playTactileClick()" class="inline-flex items-center gap-1.5 text-[#C85A17] font-bold font-display hover:underline">
+                <span>Explore Full Slate & Demographic Breakdowns in App</span>
+                <span>➔</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 2: EPISTEMIC RIGOR & REAL-WORLD PROVENANCE                    -->
+  <!-- ===================================================================== -->
+  <section id="empirical-rigor" class="py-16 md:py-24 px-4 bg-[#F4EFE6] border-b-2 border-[var(--ink)]">
+    <div class="max-w-5xl mx-auto space-y-12">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-3">
+        <span class="text-xs font-mono font-bold uppercase tracking-widest text-[#C85A17]">EPISTEMIC METHODOLOGY</span>
+        <h2 class="font-editorial font-bold text-3xl sm:text-4xl text-[var(--ink)] tracking-tight">
+          Grounded in Empirical Baseline Science, Not Algorithmic Rage.
+        </h2>
+        <p class="font-sans text-sm sm:text-base text-gray-600">
+          Internet polls are notorious for bot farms, brigading, and selection bias. PLOT combines verified human participant sampling with academic sociological ground-truth.
+        </p>
+      </div>
+
+      <!-- 3 Telemetry Bento Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        <!-- Card 1: Benchmark Calibrations -->
+        <div class="tactile-card p-6 bg-white space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-[#E8F0FE] border-2 border-[var(--ink)] flex items-center justify-center text-lg">
+            🏛️
+          </div>
+          <h3 class="font-display font-bold text-lg text-[var(--ink)]">Empirical Academic Baseline</h3>
+          <p class="text-xs text-gray-600 leading-relaxed font-sans">
+            Every core dilemma is cross-calibrated against verified benchmark data from the <strong>Pew Research Center's American Trends Panel</strong> (ATP Wave 104) and the <strong>World Values Survey Wave 7</strong> (24,500 adult respondents, ±2.2% margin of error).
+          </p>
+          <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-mono text-gray-500">
+            <span>Sample n: 24,500</span>
+            <span class="text-emerald-700 font-bold">Verified Baseline ✓</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Bayesian Shrinkage -->
+        <div class="tactile-card p-6 bg-white space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-[#DCFCE7] border-2 border-[var(--ink)] flex items-center justify-center text-lg">
+            📐
+          </div>
+          <h3 class="font-display font-bold text-lg text-[var(--ink)]">Bayesian Shrinkage Smoothing</h3>
+          <p class="text-xs text-gray-600 leading-relaxed font-sans">
+            To prevent small regional cohorts from skewing visual distributions, PLOT employs a <strong>James-Stein empirical Bayes shrinkage estimator</strong>. Low-sample cells blend gracefully toward macro-regional empirical priors.
+          </p>
+          <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-mono text-gray-500">
+            <span>Laplace Prior: &alpha; = 1.0</span>
+            <span class="text-[#003153] font-bold">Variance Regularized</span>
+          </div>
+        </div>
+
+        <!-- Card 3: 19 Macro-Regions -->
+        <div class="tactile-card p-6 bg-white space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-[#FFF3B0] border-2 border-[var(--ink)] flex items-center justify-center text-lg">
+            🌐
+          </div>
+          <h3 class="font-display font-bold text-lg text-[var(--ink)]">19 Global Macro-Regions</h3>
+          <p class="text-xs text-gray-600 leading-relaxed font-sans">
+            Western tech products treat "the internet" as a uniform monologue. PLOT stratifies every ballot across 19 geographical partitions, spanning Latin America, the Nordics, Sub-Saharan Africa, East Asia, and Oceania.
+          </p>
+          <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-mono text-gray-500">
+            <span>Coverage: 19 Regions</span>
+            <span class="text-purple-700 font-bold">15 Global Hubs</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 3: THE THREE PILLARS                                          -->
+  <!-- ===================================================================== -->
+  <section id="three-pillars" class="py-16 md:py-24 px-4 border-b-2 border-[var(--ink)]">
+    <div class="max-w-5xl mx-auto space-y-12">
+      
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <span class="text-xs font-mono font-bold uppercase tracking-widest text-[#C85A17]">PRODUCT ARCHITECTURE</span>
+        <h2 class="font-editorial font-bold text-3xl sm:text-4xl text-[var(--ink)] tracking-tight">
+          Three Deliberative Pillars.
+        </h2>
+        <p class="font-sans text-sm sm:text-base text-gray-600">
+          Designed from the ground up for reflective engagement rather than mindless reaction loops.
+        </p>
+      </div>
+
+      <div class="space-y-6">
+        
+        <!-- Pillar 1 -->
+        <div class="tactile-card p-6 md:p-8 bg-[#FCFAF7] flex flex-col md:flex-row items-center gap-6">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#FFF3B0] border-2 border-[var(--ink)] flex items-center justify-center text-3xl shrink-0 shadow-[2px_2px_0_var(--ink)]">
+            🗳️
+          </div>
+          <div class="space-y-2 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-[#C85A17]">PILLAR I</span>
+              <span class="text-gray-300">•</span>
+              <span class="text-xs font-mono text-gray-500">MORNING RITUAL</span>
+            </div>
+            <h3 class="font-editorial font-bold text-2xl text-[var(--ink)]">The Daily Deliberation Slate</h3>
+            <p class="font-sans text-sm text-gray-600 leading-relaxed">
+              Every morning at 00:00 UTC, a fresh slate of 5 non-obvious cultural dilemmas drops. A calibrated 750ms reflection buffer prevents impulsive twitch voting. No infinite scroll feed. Once your 5 dilemmas are answered, your daily slate is locked and stored into your archival streak.
+            </p>
+          </div>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="tactile-card p-6 md:p-8 bg-[#FCFAF7] flex flex-col md:flex-row items-center gap-6">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#E8F0FE] border-2 border-[var(--ink)] flex items-center justify-center text-3xl shrink-0 shadow-[2px_2px_0_var(--ink)]">
+            🧭
+          </div>
+          <div class="space-y-2 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-[#1967D2]">PILLAR II</span>
+              <span class="text-gray-300">•</span>
+              <span class="text-xs font-mono text-gray-500">IDENTITY & RELOCATION</span>
+            </div>
+            <h3 class="font-editorial font-bold text-2xl text-[var(--ink)]">Your Cultural Compass & 5D Vector</h3>
+            <p class="font-sans text-sm text-gray-600 leading-relaxed">
+              As you deliberate, your personal 5-dimensional worldview vector forms in real time across Autonomy, Chronemics, Relational Permeability, Institutional Trust, and Capital Meritocracy. The <strong>Culture Shock Simulator</strong> models friction against 15 global destination centroids (Tokyo, London, Zurich, etc.) and issues survival protocols.
+            </p>
+          </div>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="tactile-card p-6 md:p-8 bg-[#FCFAF7] flex flex-col md:flex-row items-center gap-6">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#DCFCE7] border-2 border-[var(--ink)] flex items-center justify-center text-3xl shrink-0 shadow-[2px_2px_0_var(--ink)]">
+            🗺️
+          </div>
+          <div class="space-y-2 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-[#2E6F40]">PILLAR III</span>
+              <span class="text-gray-300">•</span>
+              <span class="text-xs font-mono text-gray-500">THE 150-DILEMMA VAULT</span>
+            </div>
+            <h3 class="font-editorial font-bold text-2xl text-[var(--ink)]">The Global Cultural Archive</h3>
+            <p class="font-sans text-sm text-gray-600 leading-relaxed">
+              Explore 150 empirical moral dilemmas across 7 sociological arenas: Work & Mobility, Ethics & AI, Kinship & Intimacy, Civic Trust & Order, Capital & Meritocracy, Time & Sociability, and Existential Tech. Instant keyword search, category chips, and 1-tap "Explore in Map" loading.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 4: INTERACTIVE MICRO-CARTOGRAM SHOWCASE                       -->
+  <!-- ===================================================================== -->
+  <section id="cartogram-showcase" class="py-16 md:py-24 px-4 bg-[#F4EFE6] border-b-2 border-[var(--ink)]">
+    <div class="max-w-5xl mx-auto space-y-8 text-center">
+      
+      <div class="space-y-2 max-w-2xl mx-auto">
+        <span class="text-xs font-mono font-bold uppercase tracking-widest text-[#C85A17]">CARTOGRAPHIC PROJECTION</span>
+        <h2 class="font-editorial font-bold text-3xl sm:text-4xl text-[var(--ink)] tracking-tight">
+          The Living Geography of Human Disagreement.
+        </h2>
+        <p class="font-sans text-sm text-gray-600">
+          Tap or hover any region to inspect local moral consensus. Toggle between community votes and empirical sociological baselines.
+        </p>
+      </div>
+
+      <!-- Cartogram Container -->
+      <div class="tactile-card p-4 sm:p-6 md:p-8 bg-[#FAF6EE] relative shadow-[0_6px_0_var(--ink)] text-left">
+        
+        <!-- Controls Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-[#D5CFC4]">
+          <div class="flex items-center gap-2 font-mono text-xs">
+            <span class="font-bold text-[var(--ink)]">Active Lens:</span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="setLandingMapMode('community')" id="btn-map-community" class="tactile-pill px-3 py-1 bg-[var(--ink)] text-white text-[11px] font-bold cursor-pointer">Live Community</button>
+              <button type="button" onclick="setLandingMapMode('benchmark')" id="btn-map-benchmark" class="tactile-pill px-3 py-1 bg-white text-gray-700 text-[11px] font-bold cursor-pointer hover:bg-gray-50">Pew / WVS Benchmark</button>
+            </div>
+          </div>
+          
+          <div class="text-[11px] font-mono text-gray-500">
+            Dilemma: <span class="font-bold text-[var(--ink)]">Q1: Remote Work Pay Cut</span>
+          </div>
+        </div>
+
+        <!-- Stylized Micro-Cartogram SVG -->
+        <div class="relative w-full flex justify-center overflow-hidden py-2">
+          
+          <!-- Floating Reticle Tooltip -->
+          <div id="landing-reticle" class="hidden absolute pointer-events-none z-20 bg-[#FCF9F2] border-2 border-[var(--ink)] rounded-xl px-3 py-2 shadow-[3px_3px_0_var(--ink)] font-mono text-xs min-w-[170px]">
+            <div class="flex items-center gap-1.5 border-b border-[#D5CFC4] pb-1 mb-1">
+              <span id="reticle-flag">🌐</span>
+              <span id="reticle-name" class="font-bold text-[var(--ink)]">Region</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-gray-500">Dominant:</span>
+              <span id="reticle-lead" class="font-bold text-[#E66101]">● 58%</span>
+            </div>
+            <div id="reticle-sample" class="text-[10px] text-gray-400">n = 12,456 verified</div>
+          </div>
+
+          <!-- Stylized World Vector Map -->
+          <svg viewBox="0 0 960 460" class="w-full h-auto select-none max-w-4xl" id="landing-cartogram-svg">
+            <defs>
+              <pattern id="graticule-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#D5CFC4" stroke-width="0.5" stroke-dasharray="2,2"/>
+              </pattern>
+            </defs>
+
+            <!-- Graticule Background -->
+            <rect width="960" height="460" fill="url(#graticule-grid)" opacity="0.6"/>
+            <rect x="10" y="10" width="940" height="440" fill="none" stroke="#18181B" stroke-width="1.5"/>
+
+            <!-- Canada -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('CANADA', event)" onmouseleave="hideReticle()" onclick="showReticle('CANADA', event)">
+              <rect x="180" y="70" width="170" height="70" rx="8" fill="#FF8C42" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="265" y="105" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Canada</text>
+              <text x="265" y="122" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFFFFF">● 64% Option A</text>
+            </g>
+
+            <!-- US West -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('US_WEST', event)" onmouseleave="hideReticle()" onclick="showReticle('US_WEST', event)">
+              <rect x="150" y="150" width="115" height="75" rx="8" fill="#E66101" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="207" y="185" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">US West</text>
+              <text x="207" y="202" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFFFFF">● 58% Option A</text>
+            </g>
+
+            <!-- US East -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('US_EAST', event)" onmouseleave="hideReticle()" onclick="showReticle('US_EAST', event)">
+              <rect x="275" y="150" width="115" height="75" rx="8" fill="#00B4D8" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="332" y="185" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">US East</text>
+              <text x="332" y="202" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFFFFF">▲ 49% Option B</text>
+            </g>
+
+            <!-- Latin America / Brazil -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('BRAZIL', event)" onmouseleave="hideReticle()" onclick="showReticle('BRAZIL', event)">
+              <rect x="250" y="245" width="130" height="95" rx="8" fill="#FF8C42" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="315" y="288" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Brazil & LatAm</text>
+              <text x="315" y="305" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFFFFF">● 52% Option A</text>
+            </g>
+
+            <!-- UK & Ireland -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('UK_IRELAND', event)" onmouseleave="hideReticle()" onclick="showReticle('UK_IRELAND', event)">
+              <rect x="425" y="90" width="65" height="55" rx="6" fill="#E66101" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="457" y="118" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">UK</text>
+              <text x="457" y="132" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#FFFFFF">● 66%</text>
+            </g>
+
+            <!-- West Europe -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('WEST_EUROPE', event)" onmouseleave="hideReticle()" onclick="showReticle('WEST_EUROPE', event)">
+              <rect x="495" y="100" width="90" height="65" rx="6" fill="#FF8C42" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="540" y="130" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">West Europe</text>
+              <text x="540" y="145" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#FFFFFF">● 61%</text>
+            </g>
+
+            <!-- Nordics -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('NORDICS', event)" onmouseleave="hideReticle()" onclick="showReticle('NORDICS', event)">
+              <rect x="495" y="45" width="80" height="50" rx="6" fill="#E66101" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="535" y="72" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">Nordics</text>
+              <text x="535" y="85" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#FFFFFF">● 72%</text>
+            </g>
+
+            <!-- South Asia -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('SOUTH_ASIA', event)" onmouseleave="hideReticle()" onclick="showReticle('SOUTH_ASIA', event)">
+              <rect x="625" y="180" width="95" height="75" rx="8" fill="#00B4D8" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="672" y="215" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">South Asia</text>
+              <text x="672" y="232" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFFFFF">▲ 55% Option B</text>
+            </g>
+
+            <!-- East Asia -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('EAST_ASIA', event)" onmouseleave="hideReticle()" onclick="showReticle('EAST_ASIA', event)">
+              <rect x="735" y="125" width="115" height="80" rx="8" fill="#B5179E" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="792" y="160" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">East Asia</text>
+              <text x="792" y="177" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFFFFF">◆ 44% Option D</text>
+            </g>
+
+            <!-- Oceania -->
+            <g class="cursor-pointer group" onmouseenter="showReticle('OCEANIA', event)" onmouseleave="hideReticle()" onclick="showReticle('OCEANIA', event)">
+              <rect x="735" y="270" width="110" height="85" rx="8" fill="#FF8C42" stroke="#18181B" stroke-width="2" class="transition-all group-hover:brightness-95"/>
+              <text x="790" y="308" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Oceania</text>
+              <text x="790" y="325" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFFFFF">● 62% Option A</text>
+            </g>
+
+          </svg>
+        </div>
+
+        <!-- Regional Carousel Selector below Map -->
+        <div class="mt-4 pt-3 border-t border-[#D5CFC4] flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-gray-500 font-bold">Inspect Hotspots:</span>
+            <button onclick="showReticle('US_WEST')" class="tactile-pill px-2.5 py-1 bg-white hover:bg-gray-100 text-[11px] font-bold">🇺🇸 US-West (58% A)</button>
+            <button onclick="showReticle('UK_IRELAND')" class="tactile-pill px-2.5 py-1 bg-white hover:bg-gray-100 text-[11px] font-bold">🇬🇧 UK (66% A)</button>
+            <button onclick="showReticle('SOUTH_ASIA')" class="tactile-pill px-2.5 py-1 bg-white hover:bg-gray-100 text-[11px] font-bold">🇮🇳 South Asia (55% B)</button>
+            <button onclick="showReticle('EAST_ASIA')" class="tactile-pill px-2.5 py-1 bg-white hover:bg-gray-100 text-[11px] font-bold">🇯🇵 East Asia (44% D)</button>
+          </div>
+          
+          <a href="preview/" onclick="playTactileClick()" class="inline-flex items-center gap-1.5 text-[#C85A17] font-bold font-display hover:underline">
+            <span>Open Interactive Map in App ➔</span>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 5: THE MANIFESTO (ANTHROPIC EDITORIAL GRAVITY)                -->
+  <!-- ===================================================================== -->
+  <section class="py-16 md:py-24 px-4 border-b-2 border-[var(--ink)]">
+    <div class="max-w-3xl mx-auto space-y-6">
+      
+      <div class="border-b-2 border-[var(--ink)] pb-3">
+        <span class="text-xs font-mono font-bold uppercase tracking-widest text-[#C85A17]">THE DELIBERATIVE MANIFESTO</span>
+        <h2 class="font-editorial font-bold text-3xl sm:text-4xl text-[var(--ink)] tracking-tight mt-1">
+          Deliberation Over Doomscrolling. Consensus Over Outrage.
+        </h2>
+      </div>
+
+      <div class="space-y-4 font-editorial text-base sm:text-lg text-[var(--ink)] leading-relaxed">
+        <p class="editorial-dropcap">
+          Social feeds are engineered to select for the most belligerent 5% of opinions. When every disagreement is flattened into an outrage loop of binary upvotes, quote dunks, and algorithmic rage-bait, we forget that human cultures diverge for coherent, historically intelligible reasons.
+        </p>
+        <p>
+          A software engineer in Seattle, a civil servant in Tokyo, and a shopkeeper in Nairobi do not disagree because one is virtuous and the others malicious. They disagree because they navigate different trade-offs between individual autonomy, familial obligation, institutional trust, and capital security.
+        </p>
+        <p>
+          PLOT was built as an epistemic counterweight: an archival sanctuary where moral dilemmas are treated as multi-option trade-offs, measured against real-world sociological baselines, and mapped with scientific clarity.
+        </p>
+      </div>
+
+      <div class="p-4 bg-[#FFF9ED] border-2 border-[var(--ink)] rounded-xl font-mono text-xs text-gray-700 flex items-center justify-between">
+        <span>"Human consensus is rarely unanimous, but it is rarely arbitrary."</span>
+        <span class="font-bold text-[var(--ink)]">— PLOT Epistemic Charter</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 6: LAUNCH PORTAL & ARCHIVAL FOLIO FOOTER                      -->
+  <!-- ===================================================================== -->
+  <section class="py-16 md:py-24 px-4 bg-[#FAF6EE]">
+    <div class="max-w-4xl mx-auto text-center space-y-8">
+      
+      <div class="tactile-card p-8 md:p-12 bg-[#FCFAF7] space-y-6 shadow-[0_8px_0_var(--ink)]">
+        
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-[var(--ink)] text-white flex items-center justify-center text-2xl shadow-[3px_3px_0_var(--ink)]">
+          ⚓
+        </div>
+
+        <h2 class="font-editorial font-bold text-3xl sm:text-4xl md:text-5xl text-[var(--ink)] tracking-tight">
+          Find Your Coordinates on the Cultural Atlas.
+        </h2>
+
+        <p class="font-sans text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
+          Cast your ballot on today's 5 dilemmas, calibrate your 5D cultural vector, and see where you fit in the mosaic of human belief. Free, private, and zero account required.
+        </p>
+
+        <div class="pt-2">
+          <a href="preview/" onclick="playTactileClick()" class="tactile-btn inline-flex items-center gap-2 px-8 py-4 bg-[#C85A17] hover:bg-[#B34E12] text-white rounded-2xl text-base md:text-lg font-display font-bold shadow-[0_5px_0_var(--ink)]">
+            <span>Enter The Cultural Atlas</span>
+            <span>➔</span>
+          </a>
+        </div>
+
+        <div class="pt-4 flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-gray-500">
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> PWA Offline-First</span>
+          <span>•</span>
+          <span>110 Automated Tests Green</span>
+          <span>•</span>
+          <span>Open Data Science (MIT)</span>
+        </div>
+
+      </div>
+
+      <!-- Footer Metadata -->
+      <footer class="pt-8 border-t border-[#D5CFC4] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-gray-500">
+        <div class="flex items-center gap-2">
+          <span class="font-masthead font-bold text-sm text-[var(--ink)]">PLOT</span>
+          <span>© 2026 The Cultural Atlas Project.</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a href="preview/" class="hover:text-[var(--ink)] hover:underline font-bold">Open App</a>
+          <a href="https://github.com/SnackitPal/Plot" target="_blank" rel="noopener noreferrer" class="hover:text-[var(--ink)] hover:underline font-bold">GitHub Repository</a>
+        </div>
+      </footer>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT: TACTILE AUDIO & INTERACTIVE SANDBOX LOGIC                 -->
+  <!-- ===================================================================== -->
+  <script>
+    // Dual-Transient Mechanical Synthesizer (Web Audio API)
+    let audioCtx = null;
+    function playTactileClick() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+
+        // Click Snap (1248 Hz)
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.frequency.setValueAtTime(1248, now);
+        osc1.frequency.exponentialRampToValueAtTime(180, now + 0.018);
+        gain1.gain.setValueAtTime(0.2, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.018);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.018);
+
+        // Body Thud (192 Hz)
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.frequency.setValueAtTime(192, now);
+        osc2.frequency.exponentialRampToValueAtTime(45, now + 0.035);
+        gain2.gain.setValueAtTime(0.15, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.035);
+      } catch (e) {}
+    }
+
+    // Interactive Hero Sandbox Dilemma Logic
+    let heroHasVoted = false;
+    const HERO_DISTRIBUTIONS = { 'A': 54, 'B': 24, 'C': 14, 'D': 8 };
+
+    function voteHero(option) {
+      if (heroHasVoted) return;
+      heroHasVoted = true;
+      playTactileClick();
+
+      // Highlight voted button
+      const btn = document.getElementById('hero-btn-' + option);
+      if (btn) btn.classList.add('is-voted');
+
+      // Expand all progress fills and show percentages
+      ['A', 'B', 'C', 'D'].forEach(opt => {
+        const fill = document.getElementById('hero-fill-' + opt);
+        const pct = document.getElementById('hero-pct-' + opt);
+        if (fill) fill.style.width = HERO_DISTRIBUTIONS[opt] + '%';
+        if (pct) pct.classList.remove('hidden');
+      });
+
+      // Reveal post-vote insight banner
+      const banner = document.getElementById('hero-post-vote-banner');
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    // Micro-Cartogram Hover Reticle HUD
+    const REGION_DATA = {
+      'CANADA': { name: 'Canada', flag: '🇨🇦', lead: '● 64% Option A', sample: 'n = 3,420' },
+      'US_WEST': { name: 'US West', flag: '🇺🇸', lead: '● 58% Option A', sample: 'n = 12,456' },
+      'US_EAST': { name: 'US East', flag: '🇺🇸', lead: '▲ 49% Option B', sample: 'n = 18,920' },
+      'BRAZIL': { name: 'Brazil & LatAm', flag: '🇧🇷', lead: '● 52% Option A', sample: 'n = 6,840' },
+      'UK_IRELAND': { name: 'United Kingdom', flag: '🇬🇧', lead: '● 66% Option A', sample: 'n = 4,120' },
+      'WEST_EUROPE': { name: 'Western Europe', flag: '🇪🇺', lead: '● 61% Option A', sample: 'n = 8,910' },
+      'NORDICS': { name: 'Nordics', flag: '🇸🇪', lead: '● 72% Option A', sample: 'n = 3,110' },
+      'SOUTH_ASIA': { name: 'South Asia', flag: '🇮🇳', lead: '▲ 55% Option B', sample: 'n = 14,200' },
+      'EAST_ASIA': { name: 'East Asia', flag: '🇯🇵', lead: '◆ 44% Option D', sample: 'n = 9,430' },
+      'OCEANIA': { name: 'Oceania', flag: '🇦🇺', lead: '● 62% Option A', sample: 'n = 2,890' }
+    };
+
+    function showReticle(regionKey, event) {
+      const reticle = document.getElementById('landing-reticle');
+      const data = REGION_DATA[regionKey];
+      if (!reticle || !data) return;
+
+      document.getElementById('reticle-flag').textContent = data.flag;
+      document.getElementById('reticle-name').textContent = data.name;
+      document.getElementById('reticle-lead').textContent = data.lead;
+      document.getElementById('reticle-sample').textContent = data.sample;
+
+      reticle.classList.remove('hidden');
+
+      if (event && event.clientX) {
+        const svgRect = document.getElementById('landing-cartogram-svg').getBoundingClientRect();
+        const x = Math.max(10, Math.min(svgRect.width - 180, event.clientX - svgRect.left + 15));
+        const y = Math.max(10, Math.min(svgRect.height - 80, event.clientY - svgRect.top - 30));
+        reticle.style.left = x + 'px';
+        reticle.style.top = y + 'px';
+      } else {
+        reticle.style.left = '40%';
+        reticle.style.top = '40%';
+      }
+    }
+
+    function hideReticle() {
+      const reticle = document.getElementById('landing-reticle');
+      if (reticle) reticle.classList.add('hidden');
+    }
+
+    function setLandingMapMode(mode) {
+      playTactileClick();
+      const btnComm = document.getElementById('btn-map-community');
+      const btnBench = document.getElementById('btn-map-benchmark');
+      if (mode === 'community') {
+        btnComm.className = 'tactile-pill px-3 py-1 bg-[var(--ink)] text-white text-[11px] font-bold cursor-pointer';
+        btnBench.className = 'tactile-pill px-3 py-1 bg-white text-gray-700 text-[11px] font-bold cursor-pointer hover:bg-gray-50';
+      } else {
+        btnBench.className = 'tactile-pill px-3 py-1 bg-[#1967D2] text-white text-[11px] font-bold cursor-pointer';
+        btnComm.className = 'tactile-pill px-3 py-1 bg-white text-gray-700 text-[11px] font-bold cursor-pointer hover:bg-gray-50';
+      }
+    }
+  </script>
 </body>
 </html>
