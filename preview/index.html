@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
  <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
  <title>The Cultural Atlas — Interactive Product Prototype</title>
  <!-- PWA & Mobile Web App Manifest -->
  <link rel="manifest" href="manifest.json">
@@ -36,6 +36,38 @@
  
   .font-masthead { font-family: var(--font-masthead); letter-spacing: 0.06em; }
   .font-editorial { font-family: var(--font-editorial); }
+
+    /* Touch-Native Mobile Ergonomics & Viewport Stabilization */
+  html, body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    position: relative;
+  }
+  button, select, input, [role="button"], .tactile-btn, .option-card-btn, .land-region {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .tactile-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 0 var(--ink);
+    }
+    .option-card-btn:hover {
+      background-color: #FFF8E7;
+    }
+  }
+  .tactile-btn:active, .tactile-btn.is-active {
+    transform: translateY(2px) !important;
+    box-shadow: 0 1px 0 var(--ink) !important;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
   /* Inline Vote Consensus Bar & Selection Latch */
   .option-card-btn {
@@ -287,11 +319,36 @@
 
 </style>
 </head>
-<body class="min-h-screen p-3 md:p-6 flex flex-col items-center">
+<body class="min-h-screen min-h-[100dvh] p-3 md:p-6 flex flex-col items-center overflow-x-hidden">
 
  <!-- TOP APP BAR (Prestige Editorial Letterpress Masthead) -->
   <header class="w-full max-w-5xl mb-4 relative">
-    <div class="tactile-card p-3 md:p-4 bg-[#FCF9F2] border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)] rounded-2xl flex items-center justify-between gap-3 flex-wrap relative overflow-hidden">
+    <!-- Mobile Compact Top Bar (< md) -->
+    <div class="md:hidden flex items-center justify-between px-3 py-2 bg-[#FCF9F2] border-2 border-[var(--ink)] shadow-[0_3px_0_var(--ink)] rounded-xl relative z-30">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('daily')">
+        <div class="w-8 h-8 tactile-card flex items-center justify-center bg-[var(--ink)] text-[#FAF6EE] shrink-0 rounded-lg shadow-xs">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" stroke="#E89D35" stroke-width="1.8"/><circle cx="12" cy="12" r="1.5" fill="#E89D35"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+        </div>
+        <span class="font-masthead font-extrabold text-xl tracking-wide text-[var(--ink)]">PLOT</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button type="button" onclick="openRegionPickerSheet()" class="tactile-pill bg-white px-2.5 py-1 text-[11px] font-mono font-bold border border-[var(--ink)] flex items-center gap-1 shadow-2xs cursor-pointer" title="Switch Region">
+          <span id="mobile-region-flag">🌐</span>
+          <span id="mobile-region-code">US-W</span>
+          <span class="text-[9px] text-gray-400">▾</span>
+        </button>
+        <div class="tactile-pill bg-[#FFF3B0] px-2 py-1 text-[11px] font-mono font-bold border border-[var(--ink)] flex items-center gap-0.5" title="Daily Streak">
+          <span>🔥</span>
+          <span id="mobile-streak-num">1</span>
+        </div>
+        <button type="button" onclick="toggleControlCenter()" class="w-8 h-8 tactile-btn bg-[#FAF6EE] rounded-lg border border-[var(--ink)] flex items-center justify-center text-xs cursor-pointer shadow-xs" aria-label="Settings & Karma">
+          ⚙️
+        </button>
+      </div>
+    </div>
+
+    <!-- Desktop Letterpress Masthead (>= md) -->
+    <div class="hidden md:flex tactile-card p-3 md:p-4 bg-[#FCF9F2] border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)] rounded-2xl items-center justify-between gap-3 flex-wrap relative overflow-hidden">
       <!-- Anchor 1: Letterpress Masthead & Cartographic Seal -->
       <div class="flex items-center gap-3 relative z-10">
         <div class="w-11 h-11 tactile-card flex items-center justify-center bg-[var(--ink)] text-[#FAF6EE] shrink-0 shadow-[2px_2px_0_var(--ink)] rounded-xl relative">
@@ -361,7 +418,7 @@
     </div>
 
     <!-- ARCHIVAL FOLIO RIBBON (Replacing Retro Arcade Ticker) -->
-    <div class="mt-2 w-full flex justify-center">
+    <div class="mt-2 w-full hidden md:flex justify-center">
       <div class="w-full py-1.5 px-3 bg-[#FAF6EE] border border-[#D5CFC4] rounded-lg text-[11px] font-mono flex items-center justify-between text-[var(--ink-muted)] flex-wrap gap-2 shadow-xs">
         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#C85A17]"></span> VOL. I • DAILY DELIBERATION • SLATE 01</span>
         <span class="hidden sm:inline-block text-gray-400">|</span>
@@ -459,8 +516,28 @@
  </div>
  </div>
 
- <!-- NAVIGATION TABS (3 Consumer Pillars) -->
- <nav class="w-full max-w-5xl flex items-center justify-between gap-2 mb-6">
+ <!-- NATIVE MOBILE STICKY BOTTOM TAB BAR (< md) -->
+  <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FCF9F2]/95 backdrop-blur-md border-t-2 border-[var(--ink)] shadow-[0_-4px_12px_rgba(24,24,27,0.08)] px-2 pt-1 pb-[calc(0.35rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around select-none">
+    <button type="button" onclick="switchTab('daily')" id="mob-tab-daily" class="mob-nav-btn flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all text-[#C85A17] font-bold cursor-pointer">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"/></svg>
+      <span class="text-[10px] font-mono tracking-tight">Today</span>
+    </button>
+    <button type="button" onclick="switchTab('archetype')" id="mob-tab-archetype" class="mob-nav-btn flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all text-gray-500 font-bold cursor-pointer">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polygon points="12,6 15,12 12,18 9,12" fill="currentColor" opacity="0.3"/><polygon points="12,6 15,12 12,12" fill="currentColor"/></svg>
+      <span class="text-[10px] font-mono tracking-tight">Compass</span>
+    </button>
+    <button type="button" onclick="switchTab('atlas')" id="mob-tab-atlas" class="mob-nav-btn flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all text-gray-500 font-bold cursor-pointer">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+      <span class="text-[10px] font-mono tracking-tight">Archive</span>
+    </button>
+    <button type="button" onclick="openDiscoveryModal()" id="mob-tab-surprise" class="mob-nav-btn flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all text-amber-700 font-bold cursor-pointer">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 5.2v9.6L12 22l-9-5.2V7.2L12 2z"/><polyline points="12 22 12 12 21 7.2"/><polyline points="12 12 3 7.2"/></svg>
+      <span class="text-[10px] font-mono tracking-tight">Surprise</span>
+    </button>
+  </nav>
+
+  <!-- NAVIGATION TABS (Desktop 3 Consumer Pillars) -->
+  <nav class="hidden md:flex w-full max-w-5xl items-center justify-between gap-2 mb-6">
  <div class="flex items-center gap-2 overflow-x-auto pb-1">
  <button onclick="switchTab('daily')" id="tab-daily" class="tactile-btn px-4 py-2 rounded-xl text-xs md:text-sm font-display font-bold bg-[#C85A17] text-white flex items-center">
  <svg class="w-3.5 h-3.5 inline-block mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"/></svg>Today's Slate
@@ -488,7 +565,7 @@
  </nav>
 
  <!-- MAIN VIEWPORT CONTAINER -->
- <main class="w-full max-w-5xl">
+ <main class="w-full max-w-5xl pb-20 md:pb-0">
 
  <!-- ======================================================== -->
  <!-- VIEW 1: THE DAILY DROP (CORE EXPERIENCE) -->
@@ -515,7 +592,7 @@
  </div>
 
     <!-- Progress Meter -->
-    <div class="w-full flex items-center justify-between px-2">
+    <div class="w-full flex flex-wrap items-center justify-between gap-1.5 px-1 sm:px-2">
       <div class="flex items-center gap-2">
         <span class="text-xs font-mono font-bold text-gray-500">TODAY'S 5 QUESTIONS:</span>
         <div class="flex items-center gap-1.5" id="step-indicators">
@@ -526,13 +603,13 @@
           <span onclick="goToStep(5)" class="w-7 h-7 tactile-pill flex items-center justify-center text-xs font-mono font-bold bg-white text-gray-400 cursor-pointer" title="Question 5">5</span>
         </div>
       </div>
-      <div class="text-xs font-mono text-gray-500" id="question-category">
+      <div class="text-[11px] sm:text-xs font-mono text-gray-500 shrink-0" id="question-category">
         CATEGORY: WORK & MOBILITY
       </div>
     </div>
 
     <!-- THE QUESTION CARD -->
-    <div class="tactile-card p-6 md:p-8 relative overflow-hidden">
+    <div class="tactile-card p-4 sm:p-6 md:p-8 relative overflow-hidden">
       <!-- Background subtle watermark -->
       <div class="absolute -right-8 -bottom-8 text-9xl opacity-5 pointer-events-none select-none font-display">
         ?
@@ -567,7 +644,7 @@
       <!-- 4 TACTILE MCQ BUTTONS (With Instant Inline Consensus Reveal) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="options-grid">
         <!-- Option A -->
-        <button onclick="commitVote('A')" id="btn-opt-A" class="tactile-btn option-card-btn p-4 rounded-xl text-left bg-[#FFF9F2] hover:bg-[#FFE8D6] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
+        <button onclick="commitVote('A')" id="btn-opt-A" class="tactile-btn option-card-btn min-h-[56px] p-3 sm:p-4 rounded-xl text-left bg-[#FFF9F2] hover:bg-[#FFE8D6] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
           <div class="vote-progress-fill bg-[#FFE57F]/45 border-r-2 border-[var(--ink)]" id="vote-fill-A" style="width: 0%;"></div>
           <div class="flex items-center gap-3 relative z-10">
             <span class="w-8 h-8 rounded-full border-2 border-[var(--ink)] bg-[#E66101] text-white flex items-center justify-center font-display font-bold text-sm shrink-0">
@@ -584,7 +661,7 @@
         </button>
 
         <!-- Option B -->
-        <button onclick="commitVote('B')" id="btn-opt-B" class="tactile-btn option-card-btn p-4 rounded-xl text-left bg-[#F4F9FC] hover:bg-[#E1F0F7] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
+        <button onclick="commitVote('B')" id="btn-opt-B" class="tactile-btn option-card-btn min-h-[56px] p-3 sm:p-4 rounded-xl text-left bg-[#F4F9FC] hover:bg-[#E1F0F7] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
           <div class="vote-progress-fill bg-[#BAE6FD]/45 border-r-2 border-[var(--ink)]" id="vote-fill-B" style="width: 0%;"></div>
           <div class="flex items-center gap-3 relative z-10">
             <span class="w-8 h-8 rounded-full border-2 border-[var(--ink)] bg-[#00B4D8] text-white flex items-center justify-center font-display font-bold text-sm shrink-0">
@@ -601,7 +678,7 @@
         </button>
 
         <!-- Option C -->
-        <button onclick="commitVote('C')" id="btn-opt-C" class="tactile-btn option-card-btn p-4 rounded-xl text-left bg-[#F2FBF6] hover:bg-[#DEF5E9] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
+        <button onclick="commitVote('C')" id="btn-opt-C" class="tactile-btn option-card-btn min-h-[56px] p-3 sm:p-4 rounded-xl text-left bg-[#F2FBF6] hover:bg-[#DEF5E9] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
           <div class="vote-progress-fill bg-[#A7F3D0]/45 border-r-2 border-[var(--ink)]" id="vote-fill-C" style="width: 0%;"></div>
           <div class="flex items-center gap-3 relative z-10">
             <span class="w-8 h-8 rounded-full border-2 border-[var(--ink)] bg-[#06D6A0] text-white flex items-center justify-center font-display font-bold text-sm shrink-0">
@@ -618,7 +695,7 @@
         </button>
 
         <!-- Option D -->
-        <button onclick="commitVote('D')" id="btn-opt-D" class="tactile-btn option-card-btn p-4 rounded-xl text-left bg-[#FAF4FC] hover:bg-[#EFE2F7] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
+        <button onclick="commitVote('D')" id="btn-opt-D" class="tactile-btn option-card-btn min-h-[56px] p-3 sm:p-4 rounded-xl text-left bg-[#FAF4FC] hover:bg-[#EFE2F7] flex items-center justify-between group border-2 border-[var(--ink)] shadow-[0_4px_0_var(--ink)]">
           <div class="vote-progress-fill bg-[#E9D5FF]/45 border-r-2 border-[var(--ink)]" id="vote-fill-D" style="width: 0%;"></div>
           <div class="flex items-center gap-3 relative z-10">
             <span class="w-8 h-8 rounded-full border-2 border-[var(--ink)] bg-[#B5179E] text-white flex items-center justify-center font-display font-bold text-sm shrink-0">
@@ -1219,6 +1296,41 @@
             </div>
             <div class="absolute -bottom-2 left-6 w-3.5 h-3.5 bg-white border-b-2 border-r-2 border-[var(--ink)] rotate-45"></div>
           </div>
+        <!-- MOBILE REGION SELECTION PILL CAROUSEL (< md) -->
+        <div class="md:hidden mt-3 border-t border-[#D5CFC4]/70 pt-2.5">
+          <div class="flex items-center justify-between text-[11px] font-mono font-bold text-gray-500 mb-1.5 px-1">
+            <span>SELECT REGION TO INSPECT:</span>
+            <span class="text-[#C85A17]">19 Macro-Regions</span>
+          </div>
+          <div id="mobile-region-carousel" class="flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-none snap-x" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+            <!-- Populated dynamically via renderMobileRegionCarousel() -->
+          </div>
+        </div>
+
+        <!-- FIXED MOBILE MAP INSPECTOR DOCK (< md) -->
+        <div id="mobile-map-inspector" class="md:hidden mt-2 p-3 bg-white rounded-xl border-2 border-[var(--ink)] shadow-[2px_2px_0px_#1A1A24] space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="mob-insp-flag" class="text-xl">🌐</span>
+              <div>
+                <h4 id="mob-insp-title" class="font-display font-bold text-sm text-[var(--ink)] leading-tight">Select a Region</h4>
+                <span id="mob-insp-sample" class="text-[10px] font-mono text-gray-500">Tap any region or pill above</span>
+              </div>
+            </div>
+            <span id="mob-insp-lead" class="tactile-pill px-2 py-0.5 bg-[#FFF3B0] text-[10px] font-mono font-bold text-[var(--ink)]">
+              ● Leading
+            </span>
+          </div>
+
+          <!-- Mini Horizontal Consensus Bar -->
+          <div class="w-full h-3.5 rounded-full overflow-hidden flex border border-[var(--ink)] shadow-2xs">
+            <div id="mob-bar-A" class="bg-[#E66101] h-full transition-all duration-300" style="width: 25%;"></div>
+            <div id="mob-bar-B" class="bg-[#00B4D8] h-full transition-all duration-300" style="width: 25%;"></div>
+            <div id="mob-bar-C" class="bg-[#06D6A0] h-full transition-all duration-300" style="width: 25%;"></div>
+            <div id="mob-bar-D" class="bg-[#B5179E] h-full transition-all duration-300" style="width: 25%;"></div>
+          </div>
+        </div>
+
         </div>
  </div>
 
@@ -1744,7 +1856,7 @@
     </div>
 
     <!-- Results Status Bar -->
-    <div class="flex items-center justify-between px-1 text-xs font-mono text-gray-500">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1 text-xs font-mono text-gray-500">
       <div class="flex items-center gap-2">
         <span>Displaying</span>
         <span id="archive-count" class="font-bold text-[var(--ink)] bg-white px-2 py-0.5 rounded-md border border-gray-300">150</span>
@@ -2261,8 +2373,9 @@
  <!-- ======================================================== -->
  <!-- MODAL: SOCIAL SHARE CARD GENERATOR (HTML5 CANVAS) -->
  <!-- ======================================================== -->
- <div id="share-card-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
- <div class="tactile-card w-full max-w-xl bg-[#FAF7EE] p-5 md:p-6 border-3 border-[var(--ink)] space-y-4 max-h-[92vh] overflow-y-auto">
+ <div id="share-card-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 hidden">
+ <div class="tactile-card w-full max-w-xl bg-[#FAF7EE] p-4 sm:p-5 md:p-6 rounded-t-3xl md:rounded-2xl border-t-3 md:border-3 border-x-0 md:border-x-3 border-b-0 md:border-b-3 border-[var(--ink)] space-y-4 max-h-[88dvh] md:max-h-[92vh] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 relative shadow-[0_-12px_36px_rgba(0,0,0,0.25)] md:shadow-none">
+      <div class="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto -mt-1 mb-2 shrink-0"></div>
  <div class="flex items-center justify-between border-b-2 border-dashed border-gray-300 pb-3">
  <div class="flex items-center gap-2">
  <span class="text-xl"></span>
@@ -2325,8 +2438,9 @@
   <!-- ======================================================== -->
   <!-- MODAL: POST-SLATE 5-QUESTION DAILY MILESTONE & STREAK -->
   <!-- ======================================================== -->
-  <div id="daily-milestone-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-    <div class="tactile-card bg-[#FCFAF7] max-w-xl w-full p-6 md:p-8 rounded-2xl border-2 border-[var(--ink)] shadow-[8px_8px_0_var(--ink)] max-h-[90vh] overflow-y-auto relative">
+  <div id="daily-milestone-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end md:items-center justify-center p-0 md:p-4 hidden">
+    <div class="tactile-card bg-[#FCFAF7] max-w-xl w-full p-5 md:p-8 rounded-t-3xl md:rounded-2xl border-t-3 md:border-2 border-x-0 md:border-x-2 border-b-0 md:border-b-2 border-[var(--ink)] shadow-[0_-12px_36px_rgba(0,0,0,0.25)] md:shadow-[8px_8px_0_var(--ink)] max-h-[88dvh] md:max-h-[90vh] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))] md:pb-8 relative">
+      <div class="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto -mt-1 mb-2 shrink-0"></div>
       <button onclick="closeDailyMilestoneModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white hover:bg-gray-100 border-2 border-[var(--ink)] flex items-center justify-center font-bold text-lg cursor-pointer">✕</button>
       
       <!-- Archival Stamp Header -->
@@ -2392,8 +2506,9 @@
 
   <!-- MODAL: 1-TAP CRYPTOGRAPHIC PASSKEY VERIFICATION -->
   <!-- ======================================================== -->
-  <div id="passkey-verification-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
-    <div class="tactile-card bg-[#FBF9F4] p-5 md:p-6 max-w-md w-full border-3 border-[var(--ink)] shadow-[6px_6px_0_var(--ink)] space-y-4">
+  <div id="passkey-verification-modal" class="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 hidden backdrop-blur-xs">
+    <div class="tactile-card bg-[#FBF9F4] p-5 md:p-6 max-w-md w-full rounded-t-3xl md:rounded-2xl border-t-3 md:border-3 border-x-0 md:border-x-3 border-b-0 md:border-b-3 border-[var(--ink)] shadow-[0_-12px_36px_rgba(0,0,0,0.25)] md:shadow-[6px_6px_0_var(--ink)] space-y-4 max-h-[85dvh] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 relative">
+      <div class="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto -mt-1 mb-2 shrink-0"></div>
       <div class="flex items-center justify-between border-b-2 border-[var(--ink)] pb-3">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-[#C7F9CC] border-2 border-[var(--ink)] flex items-center justify-center">
@@ -2441,7 +2556,7 @@
  <!-- ======================================================== -->
  <!-- MODAL: EPISTEMIC REPUTATION & BRIDGING ECONOMY -->
  <!-- ======================================================== -->
- <div id="reputation-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
+ <div id="reputation-modal" class="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 hidden backdrop-blur-xs">
  <div class="tactile-card bg-[#FBF9F4] p-5 md:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border-3 border-[var(--ink)] shadow-[6px_6px_0_var(--ink)] space-y-4">
  <div class="flex items-center justify-between border-b-2 border-[var(--ink)] pb-3">
  <div class="flex items-center gap-2.5">
@@ -2531,7 +2646,7 @@
  </div>
 
   <!-- THOMPSON SAMPLING BANDIT DISCOVERY MODAL -->
-  <div id="discovery-modal" class="fixed inset-0 bg-black/75 z-[999] flex items-center justify-center p-4 backdrop-blur-sm hidden">
+  <div id="discovery-modal" class="fixed inset-0 bg-black/75 z-[999] flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-sm hidden">
     <div class="bg-[#FFFDF7] w-full max-w-xl rounded-2xl border-3 border-[var(--ink)] shadow-[8px_8px_0px_var(--ink)] p-5 md:p-6 space-y-4 max-h-[90vh] overflow-y-auto relative">
       
       <!-- Modal Header -->
@@ -7432,12 +7547,261 @@ async function goToStep(stepIndex) {
     setInterval(updateClock, 1000);
   }
   document.addEventListener('DOMContentLoaded', startNSTClock);
+
+// ============================================================================
+// MOBILE-FIRST CONTROLLER & TWO-WAY SYNCHRONIZATION ENGINE
+// ============================================================================
+const REGION_SHORT_NAMES = {
+  'US_WEST': { code: 'US-W', name: 'US West', flag: '🇺🇸' },
+  'US_EAST': { code: 'US-E', name: 'US East', flag: '🇺🇸' },
+  'CANADA': { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+  'MEXICO': { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
+  'BRAZIL': { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+  'SOUTHERN_CONE': { code: 'AR', name: 'Southern Cone', flag: '🇦🇷' },
+  'UK_IRELAND': { code: 'UK', name: 'UK & Ireland', flag: '🇬🇧' },
+  'WEST_EUROPE': { code: 'EU-W', name: 'West Europe', flag: '🇪🇺' },
+  'NORDICS': { code: 'NO', name: 'Nordics', flag: '🇸🇪' },
+  'SOUTH_EUROPE': { code: 'EU-S', name: 'South Europe', flag: '🇮🇹' },
+  'NORTH_AFRICA': { code: 'AF-N', name: 'North Africa', flag: '🇪🇬' },
+  'SUB_SAHARA': { code: 'AF-S', name: 'Sub-Sahara', flag: '🇳🇬' },
+  'SOUTH_AFRICA': { code: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+  'MIDDLE_EAST': { code: 'ME', name: 'Middle East', flag: '🇦🇪' },
+  'SOUTH_ASIA': { code: 'IN', name: 'South Asia', flag: '🇮🇳' },
+  'EAST_ASIA': { code: 'EA', name: 'East Asia', flag: '🇯🇵' },
+  'SE_ASIA': { code: 'SEA', name: 'SE Asia', flag: '🇸🇬' },
+  'OCEANIA': { code: 'OC', name: 'Oceania', flag: '🇦🇺' },
+  'CENTRAL_ASIA': { code: 'KZ', name: 'Central Asia', flag: '🇰🇿' }
+};
+
+let currentSelectedMobileRegion = 'US_WEST';
+
+function updateMobileNavHighlight(tabName) {
+  const tabs = ['daily', 'archetype', 'atlas', 'surprise'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('mob-tab-' + t);
+    if (!btn) return;
+    if (t === tabName) {
+      btn.classList.remove('text-gray-500');
+      btn.classList.add('text-[#C85A17]', 'font-extrabold');
+    } else {
+      btn.classList.remove('text-[#C85A17]', 'font-extrabold');
+      btn.classList.add('text-gray-500');
+    }
+  });
+}
+
+// Hook into switchTab
+const _origSwitchTab = window.switchTab;
+window.switchTab = function(tabName) {
+  if (typeof _origSwitchTab === 'function') {
+    _origSwitchTab(tabName);
+  }
+  updateMobileNavHighlight(tabName);
+};
+
+function renderMobileRegionCarousel() {
+  const carousel = document.getElementById('mobile-region-carousel');
+  if (!carousel) return;
+
+  const currentQ = (typeof getCurrentQuestion === 'function') ? getCurrentQuestion() : null;
+  const regKeys = Object.keys(REGION_SHORT_NAMES);
+  
+  carousel.innerHTML = regKeys.map(k => {
+    const reg = REGION_SHORT_NAMES[k];
+    const data = (typeof regionalData !== 'undefined' && regionalData[k]) ? regionalData[k] : null;
+    const dom = data ? data.dominant : 'A';
+    const domSym = { 'A': '●', 'B': '▲', 'C': '■', 'D': '◆' }[dom] || '●';
+    const domIdx = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 }[dom] || 0;
+    const domPct = (data && data.dist && data.dist[domIdx] !== undefined) ? data.dist[domIdx] : 50;
+    const isSelected = (currentSelectedMobileRegion === k);
+
+    return `
+      <button type="button" id="mob-pill-${k}" onclick="onMobileSelectRegion('${k}')" class="snap-start shrink-0 h-9 px-3 rounded-full border-2 border-[var(--ink)] font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${isSelected ? 'bg-[var(--ink)] text-white shadow-[0_2px_0_var(--ink)]' : 'bg-white text-[var(--ink)]'}">
+        <span>${reg.flag}</span>
+        <span>${reg.code}</span>
+        <span class="opacity-80">${domSym} ${domPct}%</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function onMobileSelectRegion(regKey) {
+  currentSelectedMobileRegion = regKey;
+  if (typeof playClickSound === 'function') playClickSound(520);
+  if (typeof inspectRegion === 'function') inspectRegion(regKey);
+
+  const reg = REGION_SHORT_NAMES[regKey];
+  const data = (typeof regionalData !== 'undefined' && regionalData[regKey]) ? regionalData[regKey] : null;
+
+  const flagEl = document.getElementById('mob-insp-flag');
+  const titleEl = document.getElementById('mob-insp-title');
+  const sampleEl = document.getElementById('mob-insp-sample');
+  const leadEl = document.getElementById('mob-insp-lead');
+
+  if (reg && flagEl && titleEl && sampleEl && leadEl) {
+    flagEl.textContent = reg.flag;
+    titleEl.textContent = reg.name;
+    const sampleVal = (data && data.sample) ? Number(data.sample).toLocaleString() : '3,840';
+    sampleEl.textContent = `n = ${sampleVal} verified`;
+    const dom = (data && data.dominant) ? data.dominant : 'A';
+    const domSym = { 'A': '●', 'B': '▲', 'C': '■', 'D': '◆' }[dom] || '●';
+    const domIdx = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 }[dom] || 0;
+    const domPct = (data && data.dist && data.dist[domIdx] !== undefined) ? data.dist[domIdx] : 50;
+    leadEl.textContent = `${domSym} ${domPct}% Option ${dom}`;
+
+    if (data && data.dist && data.dist.length >= 4) {
+      const bA = document.getElementById('mob-bar-A');
+      const bB = document.getElementById('mob-bar-B');
+      const bC = document.getElementById('mob-bar-C');
+      const bD = document.getElementById('mob-bar-D');
+      if (bA) bA.style.width = `${data.dist[0]}%`;
+      if (bB) bB.style.width = `${data.dist[1]}%`;
+      if (bC) bC.style.width = `${data.dist[2]}%`;
+      if (bD) bD.style.width = `${data.dist[3]}%`;
+    }
+  }
+
+  // Highlight pill
+  document.querySelectorAll('#mobile-region-carousel button').forEach(b => {
+    b.classList.remove('bg-[var(--ink)]', 'text-white');
+    b.classList.add('bg-white', 'text-[var(--ink)]');
+  });
+  const activePill = document.getElementById('mob-pill-' + regKey);
+  if (activePill) {
+    activePill.classList.remove('bg-white', 'text-[var(--ink)]');
+    activePill.classList.add('bg-[var(--ink)]', 'text-white');
+    activePill.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+  }
+}
+
+// Hook into inspectRegion to sync mobile inspector
+const _origInspectRegion = window.inspectRegion;
+window.inspectRegion = function(regKey) {
+  if (typeof _origInspectRegion === 'function') {
+    _origInspectRegion(regKey);
+  }
+  currentSelectedMobileRegion = regKey;
+  const reg = REGION_SHORT_NAMES[regKey];
+  const data = (typeof regionalData !== 'undefined' && regionalData[regKey]) ? regionalData[regKey] : null;
+
+  const flagEl = document.getElementById('mob-insp-flag');
+  const titleEl = document.getElementById('mob-insp-title');
+  const sampleEl = document.getElementById('mob-insp-sample');
+  const leadEl = document.getElementById('mob-insp-lead');
+
+  if (reg && flagEl && titleEl && sampleEl && leadEl) {
+    flagEl.textContent = reg.flag;
+    titleEl.textContent = reg.name;
+    const sampleVal = (data && data.sample) ? Number(data.sample).toLocaleString() : '3,840';
+    sampleEl.textContent = `n = ${sampleVal} verified`;
+    const dom = (data && data.dominant) ? data.dominant : 'A';
+    const domSym = { 'A': '●', 'B': '▲', 'C': '■', 'D': '◆' }[dom] || '●';
+    const domIdx = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 }[dom] || 0;
+    const domPct = (data && data.dist && data.dist[domIdx] !== undefined) ? data.dist[domIdx] : 50;
+    leadEl.textContent = `${domSym} ${domPct}% Option ${dom}`;
+
+    if (data && data.dist && data.dist.length >= 4) {
+      const bA = document.getElementById('mob-bar-A');
+      const bB = document.getElementById('mob-bar-B');
+      const bC = document.getElementById('mob-bar-C');
+      const bD = document.getElementById('mob-bar-D');
+      if (bA) bA.style.width = `${data.dist[0]}%`;
+      if (bB) bB.style.width = `${data.dist[1]}%`;
+      if (bC) bC.style.width = `${data.dist[2]}%`;
+      if (bD) bD.style.width = `${data.dist[3]}%`;
+    }
+  }
+
+  // Scroll carousel pill into view
+  const activePill = document.getElementById('mob-pill-' + regKey);
+  if (activePill) {
+    document.querySelectorAll('#mobile-region-carousel button').forEach(b => {
+      b.classList.remove('bg-[var(--ink)]', 'text-white');
+      b.classList.add('bg-white', 'text-[var(--ink)]');
+    });
+    activePill.classList.remove('bg-white', 'text-[var(--ink)]');
+    activePill.classList.add('bg-[var(--ink)]', 'text-white');
+    activePill.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+  }
+};
+
+function openRegionPickerSheet() {
+  const sheet = document.getElementById('mobile-region-sheet-modal');
+  const grid = document.getElementById('mobile-region-sheet-grid');
+  if (!sheet || !grid) return;
+
+  const currentVal = document.getElementById('user-region-select') ? document.getElementById('user-region-select').value : 'US_WEST';
+  grid.innerHTML = Object.entries(REGION_SHORT_NAMES).map(([key, info]) => {
+    const isCur = (key === currentVal);
+    return `
+      <button type="button" onclick="selectRegionFromSheet('${key}')" class="p-2.5 rounded-xl border-2 border-[var(--ink)] flex items-center justify-between text-left transition-all ${isCur ? 'bg-[#FFE57F] font-bold shadow-xs' : 'bg-white hover:bg-gray-50'}">
+        <span class="flex items-center gap-1.5 truncate">
+          <span>${info.flag}</span>
+          <span class="truncate">${info.name}</span>
+        </span>
+        <span class="text-[10px] text-gray-500 font-bold">${info.code}</span>
+      </button>
+    `;
+  }).join('');
+
+  sheet.classList.remove('hidden');
+}
+
+function closeRegionPickerSheet() {
+  const sheet = document.getElementById('mobile-region-sheet-modal');
+  if (sheet) sheet.classList.add('hidden');
+}
+
+function selectRegionFromSheet(regKey) {
+  const selectEl = document.getElementById('user-region-select');
+  if (selectEl) {
+    selectEl.value = regKey;
+    if (typeof changeUserRegion === 'function') changeUserRegion(regKey);
+  }
+  const info = REGION_SHORT_NAMES[regKey];
+  if (info) {
+    const flagEl = document.getElementById('mobile-region-flag');
+    const codeEl = document.getElementById('mobile-region-code');
+    if (flagEl) flagEl.textContent = info.flag;
+    if (codeEl) codeEl.textContent = info.code;
+  }
+  closeRegionPickerSheet();
+}
+
+// Hook into changeUserRegion
+const _origChangeUserRegion = window.changeUserRegion;
+window.changeUserRegion = function(regionVal) {
+  if (typeof _origChangeUserRegion === 'function') {
+    _origChangeUserRegion(regionVal);
+  }
+  const info = REGION_SHORT_NAMES[regionVal];
+  if (info) {
+    const flagEl = document.getElementById('mobile-region-flag');
+    const codeEl = document.getElementById('mobile-region-code');
+    if (flagEl) flagEl.textContent = info.flag;
+    if (codeEl) codeEl.textContent = info.code;
+  }
+};
+
+// Initialize mobile components on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  renderMobileRegionCarousel();
+  onMobileSelectRegion('US_WEST');
+  const streakBadge = document.getElementById('calendar-streak-badge');
+  if (streakBadge) {
+    const match = streakBadge.textContent.match(/(\d+)-Day/);
+    if (match && document.getElementById('mobile-streak-num')) {
+      document.getElementById('mobile-streak-num').textContent = match[1];
+    }
+  }
+});
+
 </script>
 
   <!-- ======================================================== -->
   <!-- BENCHMARK METHODOLOGY & CITATION MODAL -->
   <!-- ======================================================== -->
-  <div id="benchmark-methodology-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+  <div id="benchmark-methodology-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4">
     <div class="tactile-card p-6 md:p-8 bg-[#FAF6EE] border-2 border-[var(--ink)] rounded-2xl max-w-lg w-full relative shadow-[0_16px_32px_rgba(24,24,27,0.25)] space-y-4">
       <div class="flex items-center justify-between border-b border-[#D5CFC4] pb-3">
         <div class="flex items-center gap-2">
@@ -7490,5 +7854,30 @@ async function goToStep(stepIndex) {
       </div>
     </div>
   </div>
+
+  <!-- MOBILE REGION PICKER BOTTOM SHEET (< md) -->
+  <div id="mobile-region-sheet-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end justify-center transition-opacity duration-200" role="dialog" aria-modal="true">
+    <div onclick="closeRegionPickerSheet()" class="absolute inset-0"></div>
+    <div class="tactile-card w-full bg-[#FAF6EE] border-t-3 border-[var(--ink)] rounded-t-3xl relative shadow-[0_-12px_36px_rgba(0,0,0,0.25)] p-5 space-y-4 max-h-[85dvh] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))] z-10">
+      <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto -mt-1 mb-2 shrink-0"></div>
+      <div class="flex items-center justify-between border-b border-[#D5CFC4] pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🌐</span>
+          <div>
+            <h3 class="font-display font-bold text-base text-[var(--ink)]">Select Your Region</h3>
+            <p class="text-[11px] font-mono text-gray-500">19 Macro-Regions across the globe</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeRegionPickerSheet()" class="w-8 h-8 tactile-btn bg-white rounded-lg border border-gray-300 flex items-center justify-center font-bold text-sm cursor-pointer">✕</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2 font-mono text-xs" id="mobile-region-sheet-grid">
+        <!-- Dynamically rendered regions -->
+      </div>
+      <button type="button" onclick="closeRegionPickerSheet()" class="w-full py-2.5 tactile-btn bg-[var(--ink)] text-white font-display font-bold text-sm rounded-xl cursor-pointer">
+        Done
+      </button>
+    </div>
+  </div>
+
 </body>
 </html>
