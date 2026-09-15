@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS questions (
     min_verification_tier INTEGER NOT NULL DEFAULT 1,
     is_multi_tier INTEGER NOT NULL DEFAULT 1,
     prompt TEXT NOT NULL,
+    canonical_url TEXT DEFAULT NULL,
+    url_hash TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(slate_id) REFERENCES slates(slate_id) ON DELETE CASCADE
 );
@@ -58,6 +60,11 @@ CREATE TABLE IF NOT EXISTS perspectives (
     author_generation TEXT DEFAULT 'UNSPECIFIED',
     author_urbanicity TEXT DEFAULT 'UNSPECIFIED',
     author_macro_region TEXT DEFAULT 'UNSPECIFIED',
+    moral_lens TEXT DEFAULT 'AUTONOMY',      -- 'AUTONOMY', 'COMMUNAL_DUTY', 'ECONOMIC_PRAGMATISM', 'CIVIC_RECIPROCITY', 'HISTORICAL_PRECEDENT', 'HARM_REDUCTION'
+    in_group_helpful INTEGER NOT NULL DEFAULT 0,
+    in_group_total INTEGER NOT NULL DEFAULT 0,
+    out_group_helpful INTEGER NOT NULL DEFAULT 0,
+    out_group_total INTEGER NOT NULL DEFAULT 0,
     moderation_status TEXT DEFAULT 'APPROVED', -- 'APPROVED', 'FLAGGED', 'REJECTED'
     moderation_flags TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

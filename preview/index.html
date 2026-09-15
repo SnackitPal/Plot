@@ -332,6 +332,10 @@
         <span class="font-masthead font-extrabold text-xl tracking-wide text-[var(--ink)]">PLOT</span>
       </div>
       <div class="flex items-center gap-1.5">
+        <button type="button" onclick="openCreatePlotModal()" class="tactile-btn bg-[#C85A17] text-white px-2 py-1 text-[11px] font-mono font-bold rounded-lg border border-[var(--ink)] flex items-center gap-1 shadow-2xs cursor-pointer" title="Create Plot from URL">
+          <span>✨</span>
+          <span>+ Plot</span>
+        </button>
         <button type="button" onclick="openRegionPickerSheet()" class="tactile-pill bg-white px-2.5 py-1 text-[11px] font-mono font-bold border border-[var(--ink)] flex items-center gap-1 shadow-2xs cursor-pointer" title="Switch Region">
           <span id="mobile-region-flag">🌐</span>
           <span id="mobile-region-code">US-W</span>
@@ -557,11 +561,17 @@
  <button onclick="switchTab('spec')" id="tab-spec" class="tactile-btn" style="display: none !important;"></button>
  </div>
 
- <!-- Surprise Dilemma Action Button -->
- <button id="btn-discover-dilemma" onclick="openDiscoveryModal()" class="tactile-btn bg-[#FFF3B0] hover:bg-[#FFE57F] text-[var(--ink)] px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 shrink-0 shadow-xs" title="Explore an algorithmically selected dilemma">
- <span><svg class="w-3.5 h-3.5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5.2v9.6L12 22l-9-5.2V7.2L12 2z"/><polyline points="12 22 12 12 21 7.2"/><polyline points="12 12 3 7.2"/></svg></span>
- <span class="hidden sm:inline">Surprise Dilemma</span>
- </button>
+      <!-- Create Plot & Surprise Dilemma Action Buttons -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="btn-open-create-plot" onclick="openCreatePlotModal()" class="tactile-btn bg-[#C85A17] hover:bg-[#A3430C] text-white px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 shadow-xs cursor-pointer" title="Turn any web article, Reddit post, or YouTube video into a live cultural plot">
+          <span>✨</span>
+          <span class="hidden sm:inline">+ Create Plot</span>
+        </button>
+        <button id="btn-discover-dilemma" onclick="openDiscoveryModal()" class="tactile-btn bg-[#FFF3B0] hover:bg-[#FFE57F] text-[var(--ink)] px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 shadow-xs" title="Explore an algorithmically selected dilemma">
+          <span><svg class="w-3.5 h-3.5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5.2v9.6L12 22l-9-5.2V7.2L12 2z"/><polyline points="12 22 12 12 21 7.2"/><polyline points="12 12 3 7.2"/></svg></span>
+          <span class="hidden sm:inline">Surprise Dilemma</span>
+        </button>
+      </div>
  </nav>
 
  <!-- MAIN VIEWPORT CONTAINER -->
@@ -1411,18 +1421,19 @@
  </button>
  </div>
 
- <!-- Option Perspective Tabs -->
- <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs font-mono font-bold">
- <button onclick="switchPerspectiveTab('A')" id="ptab-A" class="px-2.5 py-1 rounded-lg border-2 border-[var(--ink)] bg-[#E66101] text-white">
- ● Why People Chose A (66%)
- </button>
- <button onclick="switchPerspectiveTab('B')" id="ptab-B" class="px-2.5 py-1 rounded-lg border-2 border-[var(--ink)] bg-white text-[var(--ink)]">
- ▲ Why People Chose B (18%)
- </button>
- <button onclick="switchPerspectiveTab('C')" id="ptab-C" class="px-2.5 py-1 rounded-lg border-2 border-[var(--ink)] bg-white text-[var(--ink)]">
- ■ Why People Chose C (12%)
- </button>
- </div>
+      <!-- 4-Bay Stance-First Perspective Tabs -->
+      <div id="stance-tabs-container" class="flex gap-1.5 overflow-x-auto pb-1 text-xs font-mono font-bold">
+        <!-- Dynamically populated by renderStanceTabs() for Options A, B, C, D -->
+      </div>
+
+      <!-- Counterweight Stance Bridging Callout -->
+      <div id="stance-bridging-callout" class="hidden p-3 rounded-xl border-2 border-amber-400 bg-amber-50/90 text-xs font-mono flex items-center justify-between gap-2 shadow-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-base">⚡</span>
+          <span id="stance-bridging-callout-text" class="text-amber-950 font-medium">Viewing counterweight arguments from opposing participants.</span>
+        </div>
+        <span class="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded border border-amber-400/50 shrink-0">Cross-Stance Nuance</span>
+      </div>
 
  <!-- Tactile Cohort Lens Filter Bar -->
  <div class="p-2.5 rounded-xl border border-[var(--ink)] bg-[#F8F5EE] space-y-2">
@@ -1576,6 +1587,18 @@
         </div>
         <textarea id="rationale-text" maxlength="280" oninput="updateCharCount()" placeholder="Why did you pick this? Share context from your everyday life... E.g., 'Commuting wastes two hours daily; saving that time for family and health outweighs any pay cut.'" class="w-full p-3 text-xs font-mono border-2 border-[var(--ink)] rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 h-20 bg-white"></textarea>
         
+        <!-- Moral Lens Selection -->
+        <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-dashed border-gray-200">
+          <label class="text-[11px] font-mono font-bold text-gray-700">Moral Lens Tag:</label>
+          <select id="new-rationale-moral-lens" class="p-1.5 text-xs font-mono border border-gray-300 rounded-lg bg-white">
+            <option value="AUTONOMY">[AUTONOMY] Individual Sovereignty & Self-Determination</option>
+            <option value="COMMUNAL_DUTY">[COMMUNAL_DUTY] Shared Responsibility & Collective Well-being</option>
+            <option value="ECONOMIC_PRAGMATISM" selected>[ECONOMIC_PRAGMATISM] Market Efficiency & Incentive Alignment</option>
+            <option value="CIVIC_RECIPROCITY">[CIVIC_RECIPROCITY] Mutual Trust & Rule of Law</option>
+            <option value="HARM_REDUCTION">[HARM_REDUCTION] Vulnerability Protection & Safety</option>
+          </select>
+        </div>
+
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <span id="constructive-badge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
@@ -1584,8 +1607,8 @@
             <span class="text-[10px] font-mono text-gray-500">• Screened automatically to keep things civil and constructive.</span>
           </div>
           <div class="flex gap-2">
-            <button type="button" onclick="toggleRationaleBox()" class="px-3 py-1.5 text-xs font-mono text-gray-600 hover:text-black font-bold">Cancel</button>
-            <button type="button" id="btn-submit-rationale" onclick="submitRationale()" class="tactile-btn px-4 py-1.5 bg-[#C7F9CC] text-emerald-900 text-xs font-bold font-mono rounded-lg border-2 border-[var(--ink)]">
+            <button type="button" onclick="toggleRationaleBox()" class="px-3 py-1.5 text-xs font-mono text-gray-600 hover:text-black font-bold cursor-pointer">Cancel</button>
+            <button type="button" id="btn-submit-rationale" onclick="submitRationale()" class="tactile-btn px-4 py-1.5 bg-[#C7F9CC] text-emerald-900 text-xs font-bold font-mono rounded-lg border-2 border-[var(--ink)] cursor-pointer">
               Post My Take
             </button>
           </div>
@@ -2734,6 +2757,146 @@
 
  </div>
 
+  <!-- ======================================================== -->
+  <!-- MODAL: IN-APP URL PLOT CREATOR ("PROOF SHEET") -->
+  <!-- ======================================================== -->
+  <div id="custom-plot-modal" class="fixed inset-0 bg-black/75 z-[999] flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-sm hidden" role="dialog" aria-modal="true">
+    <div class="bg-[#FCF9F2] w-full max-w-2xl rounded-2xl border-3 border-[var(--ink)] shadow-[8px_8px_0px_var(--ink)] p-5 md:p-6 space-y-4 max-h-[90vh] overflow-y-auto relative">
+      <!-- Modal Masthead -->
+      <div class="flex items-center justify-between border-b-2 border-dashed border-[#D5CFC4] pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 tactile-card flex items-center justify-center bg-[var(--ink)] text-amber-400 shrink-0 rounded-xl shadow-xs">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg md:text-xl text-[var(--ink)] leading-tight">Create a Dilemma Plot</h3>
+            <p class="text-xs text-gray-500 font-mono">Turn any news article, Reddit thread, or debate into a global cultural map.</p>
+          </div>
+        </div>
+        <button onclick="closeCreatePlotModal()" class="tactile-btn w-8 h-8 rounded-lg bg-white font-mono font-bold text-sm border-2 border-[var(--ink)] flex items-center justify-center hover:bg-red-50 cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Step 1: Input URL / Discussion -->
+      <div class="space-y-2">
+        <label class="block text-xs font-mono font-bold uppercase text-[var(--ink)]">Paste URL or Discussion Link</label>
+        <div class="flex gap-2">
+          <input type="url" id="custom-plot-url-input" placeholder="https://reddit.com/r/... or youtube.com/watch?v=... or news link" class="flex-1 p-2.5 text-xs font-mono border-2 border-[var(--ink)] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#C85A17]" />
+          <button type="button" onclick="handleExtractDraft()" id="btn-extract-draft" class="tactile-btn px-4 py-2 bg-[#FFD166] text-[var(--ink)] font-mono font-bold text-xs rounded-xl border-2 border-[var(--ink)] shrink-0 flex items-center gap-1 cursor-pointer">
+            <span>⚡ Draft Plot</span>
+          </button>
+        </div>
+        <!-- Quick Starter Pills -->
+        <div class="flex items-center gap-1.5 flex-wrap pt-1 text-[11px] font-mono">
+          <span class="text-gray-400 font-semibold">Quick test:</span>
+          <button type="button" onclick="fillDraftSample('remote_work')" class="tactile-pill px-2 py-0.5 bg-white border border-gray-300 hover:bg-amber-50 cursor-pointer">💼 Remote Pay Cuts</button>
+          <button type="button" onclick="fillDraftSample('ai_copyright')" class="tactile-pill px-2 py-0.5 bg-white border border-gray-300 hover:bg-amber-50 cursor-pointer">🤖 AI Copyright</button>
+          <button type="button" onclick="fillDraftSample('ev_mandate')" class="tactile-pill px-2 py-0.5 bg-white border border-gray-300 hover:bg-amber-50 cursor-pointer">⚡ EV Transition</button>
+        </div>
+      </div>
+
+      <!-- Extraction Status & Spinner -->
+      <div id="plot-draft-loading" class="hidden p-3 bg-amber-50 border-2 border-amber-300 rounded-xl text-xs font-mono text-amber-900 flex items-center gap-2">
+        <span class="animate-spin text-sm">⚙️</span>
+        <span>Extracting 4 MECE sociological choices and neutralizing bias...</span>
+      </div>
+
+      <!-- Step 2: Proof Sheet (Editable Draft) -->
+      <div id="plot-proof-sheet" class="space-y-4 pt-2 border-t-2 border-dashed border-[#D5CFC4]">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-2 space-y-1">
+            <label class="block text-[11px] font-mono font-bold text-gray-700">Dilemma Title</label>
+            <input type="text" id="draft-title" class="w-full p-2 text-xs font-mono border-2 border-[var(--ink)] rounded-lg bg-white" placeholder="Dilemma Title" />
+          </div>
+          <div class="space-y-1">
+            <label class="block text-[11px] font-mono font-bold text-gray-700">Category</label>
+            <select id="draft-category" class="w-full p-2 text-xs font-mono border-2 border-[var(--ink)] rounded-lg bg-white">
+              <option value="WORK_MOBILITY">Work & Mobility</option>
+              <option value="EXISTENTIAL_TECH">AI & Ethics</option>
+              <option value="CIVIC_TRUST">Civic Trust</option>
+              <option value="CAPITAL_FREEDOM">Capital & Markets</option>
+              <option value="KINSHIP_BOUNDARIES">Kinship & Culture</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-[11px] font-mono font-bold text-gray-700">Core Deliberative Prompt (Balanced & Non-Leading)</label>
+          <textarea id="draft-prompt" rows="2" class="w-full p-2 text-xs font-mono border-2 border-[var(--ink)] rounded-lg bg-white" placeholder="Should companies..."></textarea>
+        </div>
+
+        <!-- 4 Choices Grid -->
+        <div class="space-y-2">
+          <label class="block text-[11px] font-mono font-bold text-gray-700">4 Balanced Viewpoints (MECE)</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="draft-choices-container">
+            <!-- Choice A -->
+            <div class="flex items-center gap-2 p-2 bg-white border-2 border-[var(--ink)] rounded-lg">
+              <span class="w-6 h-6 rounded-full bg-[#C85A17] text-white flex items-center justify-center font-mono font-bold text-xs shrink-0">A</span>
+              <input type="text" id="draft-choice-A" class="w-full text-xs font-mono bg-transparent outline-none" value="Prioritize Individual Sovereignty" />
+            </div>
+            <!-- Choice B -->
+            <div class="flex items-center gap-2 p-2 bg-white border-2 border-[var(--ink)] rounded-lg">
+              <span class="w-6 h-6 rounded-full bg-[#003153] text-white flex items-center justify-center font-mono font-bold text-xs shrink-0">B</span>
+              <input type="text" id="draft-choice-B" class="w-full text-xs font-mono bg-transparent outline-none" value="Safeguard Communitarian Cohesion" />
+            </div>
+            <!-- Choice C -->
+            <div class="flex items-center gap-2 p-2 bg-white border-2 border-[var(--ink)] rounded-lg">
+              <span class="w-6 h-6 rounded-full bg-[#2E7D32] text-white flex items-center justify-center font-mono font-bold text-xs shrink-0">C</span>
+              <input type="text" id="draft-choice-C" class="w-full text-xs font-mono bg-transparent outline-none" value="Contextual & Measured Compromise" />
+            </div>
+            <!-- Choice D -->
+            <div class="flex items-center gap-2 p-2 bg-white border-2 border-[var(--ink)] rounded-lg">
+              <span class="w-6 h-6 rounded-full bg-[#8E24AA] text-white flex items-center justify-center font-mono font-bold text-xs shrink-0">D</span>
+              <input type="text" id="draft-choice-D" class="w-full text-xs font-mono bg-transparent outline-none" value="Institutional Precedent & Stability" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Founding Vote & Nuance Rationale -->
+        <div class="p-3.5 bg-[#F5EFEB] rounded-xl border-2 border-[var(--ink)] space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold text-[var(--ink)] uppercase">Your Founding Vote (Select Your Stance):</span>
+            <span class="text-[10px] font-mono text-gray-500">Every plot starts with creator's vote</span>
+          </div>
+          <div class="grid grid-cols-4 gap-2 text-center" id="creator-vote-selector">
+            <button type="button" onclick="selectCreatorVote('A')" id="cvote-A" class="creator-vote-btn py-2 font-mono font-bold text-xs border-2 border-[var(--ink)] rounded-lg bg-[#FFF9ED] border-[#C85A17] font-extrabold text-[#C85A17] shadow-xs cursor-pointer">Option A</button>
+            <button type="button" onclick="selectCreatorVote('B')" id="cvote-B" class="creator-vote-btn py-2 font-mono font-bold text-xs border-2 border-[var(--ink)] rounded-lg bg-white hover:bg-amber-100 transition-all cursor-pointer">Option B</button>
+            <button type="button" onclick="selectCreatorVote('C')" id="cvote-C" class="creator-vote-btn py-2 font-mono font-bold text-xs border-2 border-[var(--ink)] rounded-lg bg-white hover:bg-amber-100 transition-all cursor-pointer">Option C</button>
+            <button type="button" onclick="selectCreatorVote('D')" id="cvote-D" class="creator-vote-btn py-2 font-mono font-bold text-xs border-2 border-[var(--ink)] rounded-lg bg-white hover:bg-amber-100 transition-all cursor-pointer">Option D</button>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-[11px] font-mono font-bold text-gray-700">Moral Lens Tag</label>
+            <select id="draft-moral-lens" class="w-full p-2 text-xs font-mono border-2 border-[var(--ink)] rounded-lg bg-white">
+              <option value="AUTONOMY">[AUTONOMY] Individual Sovereignty & Self-Determination</option>
+              <option value="COMMUNAL_DUTY">[COMMUNAL_DUTY] Shared Responsibility & Collective Well-being</option>
+              <option value="ECONOMIC_PRAGMATISM" selected>[ECONOMIC_PRAGMATISM] Market Efficiency & Incentive Alignment</option>
+              <option value="CIVIC_RECIPROCITY">[CIVIC_RECIPROCITY] Mutual Trust & Rule of Law</option>
+              <option value="HARM_REDUCTION">[HARM_REDUCTION] Vulnerability Protection & Safety</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-[11px] font-mono font-bold text-gray-700">Your Perspective / Rationale (Seed Perspective)</label>
+            <textarea id="draft-rationale" rows="2" maxlength="280" class="w-full p-2 text-xs font-mono border-2 border-[var(--ink)] rounded-lg bg-white" placeholder="Why do you support this stance? Provide context from your experience..."></textarea>
+          </div>
+        </div>
+
+        <!-- Publish Error / Message -->
+        <div id="plot-publish-msg" class="hidden p-2.5 rounded-lg text-xs font-mono font-bold"></div>
+
+        <!-- Action Button -->
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeCreatePlotModal()" class="tactile-btn px-4 py-2 bg-white text-gray-700 font-mono font-bold text-xs rounded-xl border-2 border-gray-300 cursor-pointer">Cancel</button>
+          <button type="button" onclick="submitCustomPlot()" id="btn-submit-plot" class="tactile-btn px-6 py-2.5 bg-[#C85A17] text-white font-mono font-bold text-xs rounded-xl border-2 border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] flex items-center gap-1.5 cursor-pointer">
+            <span>🚀 Publish Plot & Open Map</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
  <!-- JAVASCRIPT APPLICATION LOGIC & SOUND SYNTHESIS -->
  <script>
  // Audio synthesizer using Web Audio API (zero external assets)
@@ -2968,7 +3131,7 @@
  }
  },
 
- async submitPerspective(questionId, choiceLetter, body, authorSalt, authorGen = null, authorUrb = null, authorReg = null) {
+ async submitPerspective(questionId, choiceLetter, body, authorSalt, authorGen = null, authorUrb = null, authorReg = null, moralLens = 'AUTONOMY') {
  try {
  const resp = await fetch(`${this.baseUrl}/api/perspectives`, {
  method: 'POST',
@@ -2981,6 +3144,7 @@
  author_generation: authorGen,
  author_urbanicity: authorUrb,
  author_macro_region: authorReg,
+ moral_lens: moralLens
  })
  });
  const data = await resp.json();
@@ -3318,7 +3482,79 @@
  console.warn('[AtlasAPI] Trajectory fetch failed:', e);
  return { trajectory: [], analytics: null };
  }
- }
+ },
+
+    async lookupPlotByUrl(url) {
+      try {
+        const resp = await fetch(`${this.baseUrl}/api/plots/lookup?url=${encodeURIComponent(url)}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('[AtlasAPI] lookupPlotByUrl failed:', e);
+        return { status: 'error', exists: false };
+      }
+    },
+
+    async extractPlotDraft(url, textExcerpt = '', title = '') {
+      try {
+        const resp = await fetch(`${this.baseUrl}/api/plots/extract-draft`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, text_excerpt: textExcerpt, title })
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('[AtlasAPI] extractPlotDraft failed:', e);
+        return null;
+      }
+    },
+
+    async createCustomPlot(payload) {
+      try {
+        const resp = await fetch(`${this.baseUrl}/api/plots/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('[AtlasAPI] createCustomPlot failed:', e);
+        return null;
+      }
+    },
+
+    async getPerspectivesByStance(questionId) {
+      try {
+        const resp = await fetch(`${this.baseUrl}/api/perspectives/${encodeURIComponent(questionId)}/by_stance`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('[AtlasAPI] getPerspectivesByStance failed:', e);
+        return null;
+      }
+    },
+
+    async ratePerspectiveCoherence(perspectiveId, raterSalt, raterChoice, evalType) {
+      try {
+        const resp = await fetch(`${this.baseUrl}/api/perspectives/rate_coherence`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            perspective_id: perspectiveId,
+            rater_salt: raterSalt,
+            rater_choice: raterChoice,
+            eval_type: evalType
+          })
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('[AtlasAPI] ratePerspectiveCoherence failed:', e);
+        return null;
+      }
+    }
  };
  window.AtlasAPI = AtlasAPI;
 
@@ -5601,7 +5837,32 @@ function renderCultureShockSimulator(shock) {
         path.setAttribute('stroke-width', '1');
         path.setAttribute('stroke', '#1A1A1A');
       }
-      if (labels) labels.style.opacity = '1.0';
+    });
+  }
+
+  function highlightMapRegion(regionKey) {
+    if (!regionKey || regionKey === 'UNSPECIFIED') return;
+    const cleanKey = String(regionKey).toUpperCase().replace(/-/g, '_');
+    const regions = document.querySelectorAll('#world-hex-map .land-region');
+    regions.forEach(group => {
+      const gKey = (group.getAttribute('data-region') || '').toUpperCase();
+      const path = group.querySelector('.land-path, polygon, path');
+      const labels = group.querySelector('.region-labels');
+      if (!path) return;
+      if (gKey === cleanKey || gKey.includes(cleanKey) || cleanKey.includes(gKey)) {
+        group.style.transition = 'opacity 0.18s ease-out, filter 0.18s ease-out';
+        group.style.opacity = '1.0';
+        group.style.filter = 'drop-shadow(0 0 6px rgba(200,90,23,0.85))';
+        path.setAttribute('stroke-width', '3');
+        path.setAttribute('stroke', '#C85A17');
+        if (labels) labels.style.opacity = '1.0';
+      } else {
+        group.style.transition = 'opacity 0.18s ease-out, filter 0.18s ease-out';
+        group.style.opacity = '0.22';
+        group.style.filter = 'grayscale(60%)';
+        path.setAttribute('stroke-width', '0.75');
+        if (labels) labels.style.opacity = '0.2';
+      }
     });
   }
 
@@ -6529,81 +6790,132 @@ async function goToStep(stepIndex) {
  if (modal) modal.classList.add('hidden');
  }
 
- async function loadPerspectivesForCurrentQuestion() {
- const qId = questions[currentStep - 1]?.id || `q_0${currentStep}`;
- let rawList = [];
+  async function loadPerspectivesForCurrentQuestion() {
+    const qId = questions[currentStep - 1]?.id || `q_0${currentStep}`;
+    let loadedBays = null;
 
- if (currentCohortAxis === 'all') {
- rawList = await AtlasAPI.getPerspectives(qId);
- } else {
- const cohortPayload = await AtlasAPI.getPerspectiveCohorts(qId, currentCohortAxis, currentCohortA, currentCohortB);
- if (cohortPayload && cohortPayload.perspectives) {
- rawList = cohortPayload.perspectives;
- } else {
- rawList = await AtlasAPI.getPerspectives(qId);
- }
- }
- 
- cachedPerspectivesByChoice = { 'A': [], 'B': [], 'C': [], 'D': [] };
+    // 1. First try fetching the stance-partitioned bays with mutual ratification
+    try {
+      const stancePayload = await AtlasAPI.getPerspectivesByStance(qId);
+      if (stancePayload && stancePayload.status === 'ok' && stancePayload.bays) {
+        loadedBays = stancePayload.bays;
+      }
+    } catch (e) {
+      console.warn('[AtlasAPI] Stance perspectives fetch failed:', e);
+    }
 
- if (rawList && rawList.length > 0) {
- rawList.forEach(p => {
- const letter = p.choice_letter || 'A';
- if (!cachedPerspectivesByChoice[letter]) cachedPerspectivesByChoice[letter] = [];
- cachedPerspectivesByChoice[letter].push(p);
- });
- } else {
- cachedPerspectivesByChoice['A'] = [
- { perspective_id: 'p_01', author_salt: '@marcus_dev (London, UK)', body: 'Commuting burns 2 hours of unpaid life every single day. An extra 10 hours a week for sleep and family is worth a 30% pay cut without hesitation.', helpful_ratings: 412, bridging_status: 'THE_SPLIT' },
- { perspective_id: 'p_02', author_salt: '@elena_sf (San Francisco, US)', body: 'Gas, car insurance, vehicle depreciation, and mental exhaustion easily equal 20% of net income anyway. You break even in actual quality of life.', helpful_ratings: 288, bridging_status: 'COMMON_GROUND' }
- ];
- cachedPerspectivesByChoice['B'] = [
- { perspective_id: 'p_03', author_salt: '@kenji_tokyo (Tokyo, JP)', body: 'With rising rent and inflation, sacrificing 30% income severely compromises long-term security and pension. Convenience is a luxury.', helpful_ratings: 531, bridging_status: 'THE_SPLIT' },
- { perspective_id: 'p_04', author_salt: '@sarah_m (Toronto, CA)', body: 'Early career compounding matters more. Better to take the commute for 5 years, bank the capital, and buy freedom later.', helpful_ratings: 340, bridging_status: 'NEEDS_MORE_RATINGS' }
- ];
- cachedPerspectivesByChoice['C'] = [
- {
- perspective_id: 'p_05',
- author_salt: '@pieter_ams (Amsterdam, NL)',
- body: 'A 20-minute bicycle or train commute is actually pleasant decompression. A 90-minute traffic jam is hell. The threshold makes all the difference.',
- helpful_ratings: 615,
- bridging_status: 'SACRED_BRIDGE',
- cohort_a: 'GEN_Z',
- cohort_b: 'BOOMER_PLUS',
- cohort_a_stats: { approval_rate: 0.78, approval_pct: 78, wilson_lower: 0.721, helpful: 48, total: 62 },
- cohort_b_stats: { approval_rate: 0.74, approval_pct: 74, wilson_lower: 0.684, helpful: 41, total: 55 },
- bridging: {
- status: 'SACRED_BRIDGE',
- is_sacred_bridge: true,
- bridge_score: 0.760,
- conservative_bridge_score: 0.702,
- polarization_delta: 0.040,
- has_quorum: true,
- reason: 'Harmonic bridge 0.760 >= 0.70 with polarization delta 0.040 <= 0.20 and conservative Wilson bound 0.702 >= 0.48.'
- }
- },
- { perspective_id: 'p_06', author_salt: '@clara_b (Berlin, DE)', body: 'It depends entirely on transit quality. If I can read on the train, commute time is useful life time.', helpful_ratings: 198, bridging_status: 'NEEDS_MORE_RATINGS' }
- ];
- }
+    if (loadedBays && (loadedBays.A?.length > 0 || loadedBays.B?.length > 0 || loadedBays.C?.length > 0 || loadedBays.D?.length > 0)) {
+      cachedPerspectivesByChoice = loadedBays;
+    } else {
+      // Cohort lens fallback
+      let rawList = [];
+      if (currentCohortAxis === 'all') {
+        rawList = await AtlasAPI.getPerspectives(qId);
+      } else {
+        const cohortPayload = await AtlasAPI.getPerspectiveCohorts(qId, currentCohortAxis, currentCohortA, currentCohortB);
+        rawList = (cohortPayload && cohortPayload.perspectives) ? cohortPayload.perspectives : await AtlasAPI.getPerspectives(qId);
+      }
 
- renderPerspectivesForOption(currentPerspectiveTab);
- loadReviewDeck();
- }
+      cachedPerspectivesByChoice = { 'A': [], 'B': [], 'C': [], 'D': [] };
+      if (rawList && rawList.length > 0) {
+        rawList.forEach(p => {
+          const letter = p.choice_letter || 'A';
+          if (!cachedPerspectivesByChoice[letter]) cachedPerspectivesByChoice[letter] = [];
+          cachedPerspectivesByChoice[letter].push(p);
+        });
+      } else {
+        cachedPerspectivesByChoice['A'] = [
+          { perspective_id: 'p_01', author_salt: '@marcus_dev (London, UK)', author_macro_region: 'UK_IRELAND', moral_lens: 'AUTONOMY', body: 'Commuting burns 2 hours of unpaid life every single day. An extra 10 hours a week for sleep and family is worth a 30% pay cut without hesitation.', helpful_ratings: 412, bridging_status: 'THE_SPLIT', out_group_helpful: 12, out_group_total: 15, is_bridging_counterweight: true },
+          { perspective_id: 'p_02', author_salt: '@elena_sf (San Francisco, US)', author_macro_region: 'US_WEST', moral_lens: 'ECONOMIC_PRAGMATISM', body: 'Gas, car insurance, vehicle depreciation, and mental exhaustion easily equal 20% of net income anyway. You break even in actual quality of life.', helpful_ratings: 288, bridging_status: 'COMMON_GROUND', out_group_helpful: 8, out_group_total: 10 }
+        ];
+        cachedPerspectivesByChoice['B'] = [
+          { perspective_id: 'p_03', author_salt: '@kenji_tokyo (Tokyo, JP)', author_macro_region: 'EAST_ASIA', moral_lens: 'COMMUNAL_DUTY', body: 'With rising rent and inflation, sacrificing 30% income severely compromises long-term security and pension. Convenience is a luxury.', helpful_ratings: 531, bridging_status: 'THE_SPLIT', out_group_helpful: 15, out_group_total: 18, is_bridging_counterweight: true },
+          { perspective_id: 'p_04', author_salt: '@sarah_m (Toronto, CA)', author_macro_region: 'CANADA', moral_lens: 'ECONOMIC_PRAGMATISM', body: 'Early career compounding matters more. Better to take the commute for 5 years, bank the capital, and buy freedom later.', helpful_ratings: 340, bridging_status: 'NEEDS_MORE_RATINGS', out_group_helpful: 4, out_group_total: 7 }
+        ];
+        cachedPerspectivesByChoice['C'] = [
+          { perspective_id: 'p_05', author_salt: '@pieter_ams (Amsterdam, NL)', author_macro_region: 'WEST_EUROPE', moral_lens: 'CIVIC_RECIPROCITY', body: 'A 20-minute bicycle or train commute is actually pleasant decompression. A 90-minute traffic jam is hell. The threshold makes all the difference.', helpful_ratings: 615, bridging_status: 'SACRED_BRIDGE', out_group_helpful: 24, out_group_total: 28, is_bridging_counterweight: true },
+          { perspective_id: 'p_06', author_salt: '@clara_b (Berlin, DE)', author_macro_region: 'WEST_EUROPE', moral_lens: 'AUTONOMY', body: 'It depends entirely on transit quality. If I can read on the train, commute time is useful life time.', helpful_ratings: 198, bridging_status: 'NEEDS_MORE_RATINGS', out_group_helpful: 6, out_group_total: 9 }
+        ];
+        cachedPerspectivesByChoice['D'] = [
+          { perspective_id: 'p_07', author_salt: '@ananya_blr (Bangalore, IN)', author_macro_region: 'SOUTH_ASIA', moral_lens: 'ECONOMIC_PRAGMATISM', body: 'Flexibility and hybrid rotation beat both extremes. Mandating a permanent cut assumes static urban economics.', helpful_ratings: 275, bridging_status: 'COMMON_GROUND', out_group_helpful: 11, out_group_total: 14, is_bridging_counterweight: true }
+        ];
+      }
+    }
 
- function switchPerspectiveTab(opt) {
- currentPerspectiveTab = opt;
- playClickSound(440);
- ['A', 'B', 'C'].forEach(o => {
- const btn = document.getElementById(`ptab-${o}`);
- if (btn) btn.className = 'px-2.5 py-1 rounded-lg border-2 border-[var(--ink)] bg-white text-[var(--ink)]';
- });
- const activeBtn = document.getElementById(`ptab-${opt}`);
- const bgColors = { 'A': 'bg-[#E66101]', 'B': 'bg-[#5D8AA8]', 'C': 'bg-[#008856]' };
- if (activeBtn) {
- activeBtn.className = `px-2.5 py-1 rounded-lg border-2 border-[var(--ink)] ${bgColors[opt]} text-white`;
- }
- renderPerspectivesForOption(opt);
- }
+    renderStanceTabs();
+    renderPerspectivesForOption(currentPerspectiveTab);
+    loadReviewDeck();
+  }
+
+  function renderStanceTabs() {
+    const container = document.getElementById('stance-tabs-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const q = questions[currentStep - 1];
+    const qId = q?.id || `q_0${currentStep}`;
+    const userVote = userVotesMap[qId] || null;
+    const choices = q?.choices || [
+      { letter: 'A', label: 'Option A', color_hex: '#E66101', shape_symbol: '●' },
+      { letter: 'B', label: 'Option B', color_hex: '#5D8AA8', shape_symbol: '▲' },
+      { letter: 'C', label: 'Option C', color_hex: '#008856', shape_symbol: '■' },
+      { letter: 'D', label: 'Option D', color_hex: '#7B3294', shape_symbol: '◆' }
+    ];
+
+    const symbolMap = { 'circle': '●', 'triangle': '▲', 'square': '■', 'diamond': '◆' };
+
+    choices.forEach(ch => {
+      const letVal = ch.letter;
+      const isSelectedTab = (currentPerspectiveTab === letVal);
+      const isUserStance = (userVote === letVal);
+      const count = (cachedPerspectivesByChoice[letVal] || []).length;
+      const sym = symbolMap[ch.shape_symbol] || ch.shape_symbol || '●';
+      const labelSnippet = ch.label ? (ch.label.length > 22 ? ch.label.substring(0, 20) + '...' : ch.label) : `Option ${letVal}`;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = `ptab-${letVal}`;
+      btn.onclick = () => switchPerspectiveTab(letVal);
+
+      if (isSelectedTab) {
+        btn.className = 'px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--ink)] text-white font-mono font-bold text-xs flex items-center gap-1.5 shadow-xs shrink-0 cursor-pointer';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-white text-[var(--ink)] hover:bg-[#FBF7EE] font-mono font-bold text-xs flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer';
+      }
+
+      let content = `<span>${sym}</span><span>${letVal}: ${escapeHtml(labelSnippet)} (${count})</span>`;
+      if (isUserStance) {
+        content += `<span class="text-[9px] px-1.5 py-0.5 bg-amber-300 text-amber-950 rounded font-extrabold ml-1 border border-amber-400">YOUR STANCE</span>`;
+      } else if (userVote) {
+        content += `<span class="text-[9px] text-gray-400 font-normal ml-0.5">Counterweight</span>`;
+      }
+
+      btn.innerHTML = content;
+      container.appendChild(btn);
+    });
+
+    // Update Counterweight Stance Bridging Callout
+    const callout = document.getElementById('stance-bridging-callout');
+    const calloutText = document.getElementById('stance-bridging-callout-text');
+    if (callout && calloutText) {
+      if (userVote && currentPerspectiveTab !== userVote) {
+        callout.classList.remove('hidden');
+        calloutText.innerHTML = `Viewing <strong>Stance ${currentPerspectiveTab}</strong> counterweight arguments. Rated constructive by participants who chose other options.`;
+      } else if (userVote && currentPerspectiveTab === userVote) {
+        callout.classList.remove('hidden');
+        calloutText.innerHTML = `Viewing takes from participants who shared your <strong>Stance ${userVote}</strong>.`;
+      } else {
+        callout.classList.add('hidden');
+      }
+    }
+  }
+
+  function switchPerspectiveTab(opt) {
+    currentPerspectiveTab = opt;
+    playClickSound(440);
+    renderStanceTabs();
+    renderPerspectivesForOption(opt);
+  }
 
  // Safe DOM construction replacing innerHTML template literals (Stored XSS Remediation)
  
@@ -6664,236 +6976,195 @@ async function goToStep(stepIndex) {
   }
 
   function renderPerspectivesForOption(opt) {
- const container = document.getElementById('perspective-cards');
- if (!container) return;
- container.innerHTML = '';
+    const container = document.getElementById('perspective-cards');
+    if (!container) return;
+    container.innerHTML = '';
 
- const list = cachedPerspectivesByChoice[opt] || [];
- if (list.length === 0) {
- const empty = document.createElement('div');
- empty.className = 'col-span-1 md:col-span-2 p-6 text-center text-xs font-mono text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300';
- empty.textContent = 'No perspectives recorded for this option yet. Share your rationale below!';
- container.appendChild(empty);
- return;
- }
+    const list = cachedPerspectivesByChoice[opt] || [];
+    if (list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'col-span-1 md:col-span-2 p-6 text-center text-xs font-mono text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300';
+      empty.textContent = 'No perspectives recorded for this option yet. Share your rationale below!';
+      container.appendChild(empty);
+      return;
+    }
 
- list.forEach(item => {
- const isSacred = (item.bridging && item.bridging.is_sacred_bridge) || item.bridging_status === 'SACRED_BRIDGE';
- const isEcho = item.bridging && (item.bridging.status === 'INTRA_GROUP_ECHO' || item.bridging.status === 'GENERATIONAL_CHASM');
- const isNew = item.is_new || (item.helpful_ratings === 0 && item.unhelpful_ratings === 0 && item.bridging_status === 'NEEDS_MORE_RATINGS');
+    list.forEach(item => {
+      const isSacred = (item.bridging && item.bridging.is_sacred_bridge) || item.bridging_status === 'SACRED_BRIDGE';
+      const isEcho = item.bridging && (item.bridging.status === 'INTRA_GROUP_ECHO' || item.bridging.status === 'GENERATIONAL_CHASM');
+      const isNew = item.is_new || (item.helpful_ratings === 0 && item.unhelpful_ratings === 0 && item.bridging_status === 'NEEDS_MORE_RATINGS');
+      const isCounterweight = item.is_bridging_counterweight || (item.out_group_helpful && item.out_group_helpful >= 1);
 
- const card = document.createElement('div');
- if (isSacred) {
- card.className = 'p-3.5 rounded-xl border-[2.5px] border-[var(--ink)] bg-[#FEF3C7] shadow-[0_5px_0_var(--ink)] space-y-2 flex flex-col justify-between relative transition-all';
- } else if (isEcho) {
- card.className = 'p-3 rounded-xl border border-rose-300 bg-[#FFFBFB] space-y-2 flex flex-col justify-between';
- } else {
- card.className = 'p-3 rounded-xl border border-gray-300 bg-[#FFFDF9] space-y-2 flex flex-col justify-between';
- }
+      const card = document.createElement('div');
+      if (isSacred || isCounterweight) {
+        card.className = 'p-3.5 rounded-xl border-[2.5px] border-[var(--ink)] bg-[#FEF3C7] shadow-[0_4px_0_var(--ink)] space-y-2 flex flex-col justify-between relative transition-all cursor-pointer';
+      } else if (isEcho) {
+        card.className = 'p-3 rounded-xl border border-rose-300 bg-[#FFFBFB] space-y-2 flex flex-col justify-between cursor-pointer';
+      } else {
+        card.className = 'p-3 rounded-xl border border-gray-300 bg-[#FFFDF9] space-y-2 flex flex-col justify-between hover:border-[var(--ink)] transition-all cursor-pointer';
+      }
 
- // Top Banner for Sacred Bridge
- if (isSacred) {
- const sacredBanner = document.createElement('div');
- sacredBanner.className = 'px-2 py-1 -mt-1.5 -mx-1.5 mb-1.5 rounded-t-lg bg-amber-300/90 border-b-2 border-[var(--ink)] flex items-center justify-between text-[10px] font-bold text-amber-950 font-mono shadow-xs';
- sacredBanner.innerHTML = '<span> SACRED BRIDGE</span><span class="text-[9px] font-semibold text-amber-900 bg-white/80 px-1.5 py-0.5 rounded border border-amber-900/30">Cross-Cohort Consensus</span>';
- card.appendChild(sacredBanner);
- }
+      // Bi-directional Map Brushing on Hover
+      card.onmouseenter = () => highlightMapRegion(item.author_macro_region || item.macro_region);
+      card.onmouseleave = () => resetMapHighlights();
 
- const header = document.createElement('div');
- header.className = 'flex justify-between items-center text-[10px] font-mono text-gray-500';
+      // Top Banner for Strongest Counterweight or Sacred Bridge
+      if (isCounterweight) {
+        const cwBanner = document.createElement('div');
+        cwBanner.className = 'px-2 py-1 -mt-1.5 -mx-1.5 mb-1.5 rounded-t-lg bg-amber-300/90 border-b-2 border-[var(--ink)] flex items-center justify-between text-[10px] font-bold text-amber-950 font-mono shadow-xs';
+        const scorePct = item.mutual_ratification_score ? Math.round(item.mutual_ratification_score * 100) : 85;
+        cwBanner.innerHTML = `<span>⭐ STRONGEST COUNTERWEIGHT</span><span class="text-[9px] font-semibold text-amber-900 bg-white/80 px-1.5 py-0.5 rounded border border-amber-900/30">${scorePct}% Cross-Stance Agreement</span>`;
+        card.appendChild(cwBanner);
+      } else if (isSacred) {
+        const sacredBanner = document.createElement('div');
+        sacredBanner.className = 'px-2 py-1 -mt-1.5 -mx-1.5 mb-1.5 rounded-t-lg bg-amber-300/90 border-b-2 border-[var(--ink)] flex items-center justify-between text-[10px] font-bold text-amber-950 font-mono shadow-xs';
+        sacredBanner.innerHTML = '<span> SACRED BRIDGE</span><span class="text-[9px] font-semibold text-amber-900 bg-white/80 px-1.5 py-0.5 rounded border border-amber-900/30">Cross-Cohort Consensus</span>';
+        card.appendChild(sacredBanner);
+      }
 
-   const userSpan = document.createElement('span');
-  userSpan.className = 'font-bold text-[var(--ink)] flex items-center gap-2 flex-wrap';
-  
-  // Format Author with The Cultural Atlas Cartographic Stamp
-  const rawAuthor = item.author_salt || item.user || '@local_citizen';
-  const authorMatch = rawAuthor.match(/^(@\w+)\s*\((.*?)\)$/);
-  if (authorMatch) {
-    const handleSpan = document.createElement('span');
-    handleSpan.className = 'text-xs font-mono font-bold text-gray-700';
-    handleSpan.textContent = authorMatch[1];
-    userSpan.appendChild(handleSpan);
-    
-    const stampEl = createCartographicStamp(authorMatch[2], item.author_macro_region || item.macro_region);
-    userSpan.appendChild(stampEl);
-  } else {
-    const stampEl = createCartographicStamp(rawAuthor, item.author_macro_region || item.macro_region);
-    userSpan.appendChild(stampEl);
+      const header = document.createElement('div');
+      header.className = 'flex justify-between items-center text-[10px] font-mono text-gray-500 flex-wrap gap-1';
+
+      const userSpan = document.createElement('span');
+      userSpan.className = 'font-bold text-[var(--ink)] flex items-center gap-2 flex-wrap';
+      
+      // Format Author with The Cultural Atlas Cartographic Stamp
+      const rawAuthor = item.author_salt || item.user || '@local_citizen';
+      const authorMatch = rawAuthor.match(/^(@\w+)\s*\((.*?)\)$/);
+      if (authorMatch) {
+        const handleSpan = document.createElement('span');
+        handleSpan.className = 'text-xs font-mono font-bold text-gray-700';
+        handleSpan.textContent = authorMatch[1];
+        userSpan.appendChild(handleSpan);
+        
+        const stampEl = createCartographicStamp(authorMatch[2], item.author_macro_region || item.macro_region);
+        userSpan.appendChild(stampEl);
+      } else {
+        const stampEl = createCartographicStamp(rawAuthor, item.author_macro_region || item.macro_region);
+        userSpan.appendChild(stampEl);
+      }
+
+      // RAWLSIAN VEIL OF IGNORANCE: Shield prestige during calibration
+      if (item.is_veiled === true) {
+        const veilBadge = document.createElement('span');
+        veilBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 font-mono';
+        veilBadge.title = 'Rawlsian Veil of Ignorance: Author prestige is blinded during deliberation calibration';
+        veilBadge.textContent = '[ CALIBRATING ] · Veil Active';
+        userSpan.appendChild(veilBadge);
+      } else if (item.author_tier_insignia || item.author_reputation_tier) {
+        const tierBadge = document.createElement('span');
+        tierBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-900 border border-purple-300 font-mono';
+        tierBadge.title = `Verified Deliberative Status: ${item.author_reputation_tier || 'Cultural Diplomat'}`;
+        tierBadge.textContent = `[ ARBITER ] ${item.author_tier_insignia || 'Dual Rosette'}`;
+        userSpan.appendChild(tierBadge);
+      }
+
+      const rightBadges = document.createElement('div');
+      rightBadges.className = 'flex items-center gap-1.5 flex-wrap justify-end';
+
+      // Moral Lens Tag
+      const moralLens = item.moral_lens || 'AUTONOMY';
+      const lensBadge = document.createElement('span');
+      lensBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-[#EFEAE1] text-[var(--ink)] border border-[#D5CFC4] uppercase';
+      lensBadge.textContent = `[${moralLens}]`;
+      rightBadges.appendChild(lensBadge);
+
+      if (isNew) {
+        const newBadge = document.createElement('span');
+        newBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-200 text-emerald-950 border border-emerald-500 font-mono';
+        newBadge.textContent = ' Just Submitted · Calibrating';
+        rightBadges.appendChild(newBadge);
+      } else if (isSacred) {
+        const bridgeBadge = document.createElement('span');
+        bridgeBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-200 text-amber-900 border border-amber-400';
+        bridgeBadge.textContent = ' SACRED BRIDGE';
+        rightBadges.appendChild(bridgeBadge);
+      } else if (isEcho) {
+        const chasmBadge = document.createElement('span');
+        chasmBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-900 border border-rose-300';
+        chasmBadge.textContent = item.bridging?.status === 'INTRA_GROUP_ECHO' ? ' ECHO CHAMBER' : ' CHASM';
+        rightBadges.appendChild(chasmBadge);
+      } else if (item.bridging_status === 'COMMON_GROUND') {
+        const bridgeBadge = document.createElement('span');
+        bridgeBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#C7F9CC] text-emerald-800 border border-emerald-300';
+        bridgeBadge.textContent = ' COMMON GROUND';
+        rightBadges.appendChild(bridgeBadge);
+      } else if (item.bridging_status === 'THE_SPLIT') {
+        const splitBadge = document.createElement('span');
+        splitBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300';
+        splitBadge.textContent = ' THE SPLIT';
+        rightBadges.appendChild(splitBadge);
+      }
+
+      const countSpan = document.createElement('span');
+      const endorsements = item.helpful_ratings ?? item.endorsements ?? 0;
+      countSpan.textContent = `▲ ${endorsements}`;
+      rightBadges.appendChild(countSpan);
+
+      header.appendChild(userSpan);
+      header.appendChild(rightBadges);
+      card.appendChild(header);
+
+      const bodyP = document.createElement('p');
+      bodyP.className = 'text-base text-gray-900 leading-relaxed my-2 font-medium';
+      bodyP.textContent = item.body || item.text || '';
+      card.appendChild(bodyP);
+
+      const footer = document.createElement('div');
+      footer.className = 'flex flex-wrap items-center justify-between gap-1.5 pt-2 border-t border-gray-100 text-[11px] font-mono';
+
+      const qualSpan = document.createElement('span');
+      qualSpan.className = 'text-[10px] text-gray-500 font-semibold';
+      const outGroupRatio = (item.out_group_total > 0)
+        ? `${item.out_group_helpful}/${item.out_group_total} cross-stance`
+        : `${endorsements} helpful`;
+      qualSpan.textContent = `🤝 ${outGroupRatio}`;
+      footer.appendChild(qualSpan);
+
+      // Mutual Ratification Action Buttons
+      const ratifyGroup = document.createElement('div');
+      ratifyGroup.className = 'flex items-center gap-1 flex-wrap';
+
+      const bSteelman = document.createElement('button');
+      bSteelman.className = 'tactile-btn px-2 py-0.5 bg-white hover:bg-emerald-50 text-emerald-900 border border-emerald-300 rounded font-bold text-[9.5px] cursor-pointer';
+      bSteelman.innerHTML = '⚖️ Steelman';
+      bSteelman.title = 'Ratify as a fair and well-argued steelman';
+      bSteelman.onclick = async (e) => {
+        e.stopPropagation();
+        playClickSound(620);
+        bSteelman.className = 'px-2 py-0.5 bg-emerald-200 text-emerald-950 border border-emerald-500 rounded font-bold text-[9.5px]';
+        bSteelman.disabled = true;
+        bSteelman.innerHTML = '✓ Steelman';
+        const qId = questions[currentStep - 1]?.id || `q_0${currentStep}`;
+        const myVote = userVotesMap[qId] || 'A';
+        await AtlasAPI.ratePerspectiveCoherence(item.perspective_id, currentRaterId, myVote, 'FAIR_STEELMAN');
+        qualSpan.textContent = '🤝 Ratified (Fair Steelman)';
+      };
+
+      const bNuance = document.createElement('button');
+      bNuance.className = 'tactile-btn px-2 py-0.5 bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 rounded font-bold text-[9.5px] cursor-pointer';
+      bNuance.innerHTML = '✨ Tradeoff';
+      bNuance.title = 'Ratify that this perspective identifies a valid tradeoff';
+      bNuance.onclick = async (e) => {
+        e.stopPropagation();
+        playClickSound(580);
+        bNuance.className = 'px-2 py-0.5 bg-blue-200 text-blue-950 border border-blue-500 rounded font-bold text-[9.5px]';
+        bNuance.disabled = true;
+        bNuance.innerHTML = '✓ Tradeoff';
+        const qId = questions[currentStep - 1]?.id || `q_0${currentStep}`;
+        const myVote = userVotesMap[qId] || 'A';
+        await AtlasAPI.ratePerspectiveCoherence(item.perspective_id, currentRaterId, myVote, 'NUANCED_TRADEOFF');
+        qualSpan.textContent = '🤝 Ratified (Nuanced Tradeoff)';
+      };
+
+      ratifyGroup.appendChild(bSteelman);
+      ratifyGroup.appendChild(bNuance);
+      footer.appendChild(ratifyGroup);
+
+      card.appendChild(footer);
+      container.appendChild(card);
+    });
   }
-
- // RAWLSIAN VEIL OF IGNORANCE: Shield prestige during calibration
- if (item.is_veiled === true) {
- const veilBadge = document.createElement('span');
- veilBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 font-mono';
- veilBadge.title = 'Rawlsian Veil of Ignorance: Author prestige is blinded during deliberation calibration';
- veilBadge.textContent = '[ CALIBRATING ] · Veil Active';
- userSpan.appendChild(veilBadge);
- } else if (item.author_tier_insignia || item.author_reputation_tier) {
- const tierBadge = document.createElement('span');
- tierBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-900 border border-purple-300 font-mono';
- tierBadge.title = `Verified Deliberative Status: ${item.author_reputation_tier || 'Cultural Diplomat'}`;
- tierBadge.textContent = `[ ARBITER ] ${item.author_tier_insignia || 'Dual Rosette'}`;
- userSpan.appendChild(tierBadge);
- }
-
- const rightBadges = document.createElement('div');
- rightBadges.className = 'flex items-center gap-1.5 flex-wrap justify-end';
-
- if (isNew) {
- const newBadge = document.createElement('span');
- newBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-200 text-emerald-950 border border-emerald-500 font-mono';
- newBadge.textContent = ' Just Submitted · Calibrating';
- rightBadges.appendChild(newBadge);
- } else if (isSacred) {
- const bridgeBadge = document.createElement('span');
- bridgeBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-200 text-amber-900 border border-amber-400';
- bridgeBadge.textContent = ' SACRED BRIDGE';
- rightBadges.appendChild(bridgeBadge);
- } else if (isEcho) {
- const chasmBadge = document.createElement('span');
- chasmBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-900 border border-rose-300';
- chasmBadge.textContent = item.bridging?.status === 'INTRA_GROUP_ECHO' ? ' ECHO CHAMBER' : ' CHASM';
- rightBadges.appendChild(chasmBadge);
- } else if (item.bridging_status === 'COMMON_GROUND') {
- const bridgeBadge = document.createElement('span');
- bridgeBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#C7F9CC] text-emerald-800 border border-emerald-300';
- bridgeBadge.textContent = ' COMMON GROUND';
- rightBadges.appendChild(bridgeBadge);
- } else if (item.bridging_status === 'THE_SPLIT') {
- const splitBadge = document.createElement('span');
- splitBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300';
- splitBadge.textContent = ' THE SPLIT';
- rightBadges.appendChild(splitBadge);
- }
-
- const countSpan = document.createElement('span');
- const endorsements = item.helpful_ratings ?? item.endorsements ?? 0;
- countSpan.textContent = `▲ ${endorsements}`;
- rightBadges.appendChild(countSpan);
-
- header.appendChild(userSpan);
- header.appendChild(rightBadges);
- card.appendChild(header);
-
- const bodyP = document.createElement('p');
- bodyP.className = 'text-base text-gray-900 leading-relaxed my-2 font-medium';
- bodyP.textContent = item.body || item.text || '';
- card.appendChild(bodyP);
-
- // Comparative Dual Approval Meter if cohort stats present
- const hasCohortStats = item.cohort_a_stats && item.cohort_b_stats;
- if (hasCohortStats || item.bridging) {
- const meterBox = document.createElement('div');
- meterBox.className = 'p-2 my-1 rounded-lg bg-white/95 border border-gray-200 text-[10px] font-mono space-y-1.5';
-
- const aName = COHORT_LABELS[item.cohort_a] || item.cohort_a || 'Cohort A';
- const bName = COHORT_LABELS[item.cohort_b] || item.cohort_b || 'Cohort B';
- const aPct = item.cohort_a_stats?.approval_pct ?? Math.round((item.cohort_a_stats?.approval_rate || 0.5) * 100);
- const bPct = item.cohort_b_stats?.approval_pct ?? Math.round((item.cohort_b_stats?.approval_rate || 0.5) * 100);
-
- if (hasCohortStats) {
- const rowA = document.createElement('div');
- rowA.className = 'flex justify-between items-center';
- rowA.innerHTML = `<span class="font-bold text-indigo-700">${aName} (${aPct}% helpful)</span>
- <div class="w-24 md:w-28 bg-gray-200 h-2 rounded-full overflow-hidden">
- <div class="bg-indigo-600 h-2 rounded-full" style="width: ${aPct}%"></div>
- </div>`;
- meterBox.appendChild(rowA);
-
- const rowB = document.createElement('div');
- rowB.className = 'flex justify-between items-center';
- rowB.innerHTML = `<span class="font-bold text-amber-700">${bName} (${bPct}% helpful)</span>
- <div class="w-24 md:w-28 bg-gray-200 h-2 rounded-full overflow-hidden">
- <div class="bg-amber-600 h-2 rounded-full" style="width: ${bPct}%"></div>
- </div>`;
- meterBox.appendChild(rowB);
- }
-
- const bScore = item.bridging?.bridge_score ?? 0.0;
- const delta = item.bridging?.polarization_delta ?? 0.0;
- const deltaLabel = delta <= 0.20 ? `Δ ${delta} (Consensus)` : `Δ ${delta} (Split)`;
- const deltaColor = delta <= 0.20 ? 'text-emerald-700 font-bold' : (delta >= 0.35 ? 'text-rose-600 font-bold' : 'text-gray-600');
-
- const metaRow = document.createElement('div');
- metaRow.className = 'flex justify-between items-center pt-1 border-t border-gray-100 text-[9px] text-gray-500';
- metaRow.innerHTML = `<span>Harmonic Bridge: <strong class="text-amber-900">${bScore}</strong></span>
- <span class="${deltaColor}">Polarization: ${deltaLabel}</span>`;
- meterBox.appendChild(metaRow);
-
- // Interactive Collapsible Audit Math Toggle
- const auditToggleBtn = document.createElement('button');
- auditToggleBtn.className = 'audit-math-toggle w-full text-left pt-1 mt-1 border-t border-dashed border-gray-200 text-[9px] font-mono font-bold text-indigo-600 hover:text-indigo-900 flex items-center justify-between cursor-pointer';
- auditToggleBtn.innerHTML = '<span> [ Audit Math ]</span><span class="text-[8px] text-gray-400">Expand details ▾</span>';
-
- const auditPanel = document.createElement('div');
- auditPanel.className = 'audit-math-panel hidden p-2 mt-1 rounded bg-amber-50/90 border border-amber-300/80 text-[9px] font-mono space-y-1 text-gray-800';
-
- const wA = item.cohort_a_stats?.wilson_lower !== undefined ? Number(item.cohort_a_stats.wilson_lower).toFixed(3) : 'N/A';
- const wB = item.cohort_b_stats?.wilson_lower !== undefined ? Number(item.cohort_b_stats.wilson_lower).toFixed(3) : 'N/A';
- const bCons = item.bridging?.conservative_bridge_score !== undefined ? Number(item.bridging.conservative_bridge_score).toFixed(3) : 'N/A';
- const quorumStr = item.bridging?.has_quorum ? ' Quorum Met (min ≥ 5)' : ' Awaiting Quorum (< 5 ratings)';
- const reasonStr = item.bridging?.reason || (isSacred ? 'Cross-cohort consensus threshold met.' : 'Evaluating cross-cohort distributions.');
-
- auditPanel.innerHTML = `
- <div class="grid grid-cols-2 gap-1 pb-1 border-b border-amber-200">
- <div><span class="text-gray-500">Harmonic B:</span> <strong class="text-amber-950">${bScore}</strong></div>
- <div><span class="text-gray-500">Wilson B_cons:</span> <strong class="text-amber-950">${bCons}</strong></div>
- <div><span class="text-gray-500">${aName} W⁻:</span> <strong class="text-indigo-900">${wA}</strong></div>
- <div><span class="text-gray-500">${bName} W⁻:</span> <strong class="text-amber-900">${wB}</strong></div>
- </div>
- <div class="flex justify-between items-center pt-0.5 text-[8.5px]">
- <span class="font-bold ${item.bridging?.has_quorum ? 'text-emerald-700' : 'text-amber-800'}">${quorumStr}</span>
- <span class="text-gray-500 font-bold">Δ = ${delta}</span>
- </div>
- <div class="text-[8px] text-gray-600 leading-tight pt-0.5 italic">"${reasonStr}"</div>
- `;
-
- auditToggleBtn.onclick = (e) => {
- e.stopPropagation();
- const isHidden = auditPanel.classList.toggle('hidden');
- auditToggleBtn.innerHTML = isHidden
- ? '<span> [ Audit Math ]</span><span class="text-[8px] text-gray-400">Expand details ▾</span>'
- : '<span> [ Hide Audit Math ]</span><span class="text-[8px] text-gray-400">Collapse ▴</span>';
- };
-
- meterBox.appendChild(auditToggleBtn);
- meterBox.appendChild(auditPanel);
- card.appendChild(meterBox);
- }
-
- const footer = document.createElement('div');
- footer.className = 'flex justify-between items-center pt-2 border-t border-gray-100 text-[11px] font-mono';
-
- const qualSpan = document.createElement('span');
- qualSpan.className = 'text-[10px] text-gray-400';
- if (item.bridging_quality !== undefined) {
- qualSpan.textContent = `Quality: ${Math.round(item.bridging_quality * 100)}%`;
- }
- footer.appendChild(qualSpan);
-
- const endorseBtn = document.createElement('button');
- endorseBtn.className = 'tactile-btn px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1';
- endorseBtn.textContent = `▲ Endorse (${endorsements})`;
- endorseBtn.onclick = async () => {
- playClickSound(620);
- endorseBtn.disabled = true;
- endorseBtn.textContent = '✓ Endorsed';
- endorseBtn.className = 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#C7F9CC] text-emerald-800 border border-emerald-300';
- const pid = item.perspective_id || 'p_temp';
- await AtlasAPI.ratePerspective(
- pid,
- currentRaterId,
- 1.0,
- userDemographics.generation_cohort,
- userDemographics.urbanicity
- );
- };
- footer.appendChild(endorseBtn);
-
- card.appendChild(footer);
- container.appendChild(card);
- });
- }
 
  function toggleRationaleBox() {
  playClickSound(500);
@@ -6971,7 +7242,9 @@ async function goToStep(stepIndex) {
  }
 
  const qId = questions[currentStep - 1]?.id || `q_0${currentStep}`;
- const choice = userVote || 'A';
+ const choice = currentPerspectiveTab || userVote || 'A';
+ const lensSelect = document.getElementById('rationale-moral-lens');
+ const moralLens = lensSelect ? lensSelect.value : 'AUTONOMY';
  const authorGen = userDemographics.generation_cohort !== 'UNSPECIFIED' ? userDemographics.generation_cohort : null;
  const authorUrb = userDemographics.urbanicity !== 'UNSPECIFIED' ? userDemographics.urbanicity : null;
  const authorReg = userDemographics.macro_region !== 'UNSPECIFIED' ? userDemographics.macro_region : null;
@@ -6993,7 +7266,8 @@ async function goToStep(stepIndex) {
  author,
  authorGen,
  authorUrb,
- authorReg
+ authorReg,
+ moralLens
  );
 
  if (res && (res.status === 'ok' || res.perspective_id)) {
@@ -7004,13 +7278,17 @@ async function goToStep(stepIndex) {
 
  // Optimistically insert newly created perspective at top of shelf
  const newPerspective = {
- perspective_id: res.perspective_id,
+ perspective_id: res.perspective_id || `p_${Date.now()}`,
  question_id: qId,
  choice_letter: choice,
+ moral_lens: moralLens,
  body: text,
  author_salt: author,
+ author_macro_region: authorReg || 'WEST_EUROPE',
  helpful_ratings: 0,
  unhelpful_ratings: 0,
+ out_group_helpful: 0,
+ out_group_total: 0,
  bridging_status: 'NEEDS_MORE_RATINGS',
  is_new: true,
  bridging: {
@@ -7043,6 +7321,241 @@ async function goToStep(stepIndex) {
  }
  }
  }
+
+  // ========================================================
+  // IN-APP URL PLOT CREATOR ("PROOF SHEET" WORKFLOW)
+  // ========================================================
+  let selectedCreatorVote = 'A';
+
+  function openCreatePlotModal() {
+    playClickSound(520);
+    const m = document.getElementById('custom-plot-modal');
+    if (m) m.classList.remove('hidden');
+    selectCreatorVote('A');
+  }
+
+  function closeCreatePlotModal() {
+    playClickSound(380);
+    const m = document.getElementById('custom-plot-modal');
+    if (m) m.classList.add('hidden');
+    const msg = document.getElementById('plot-publish-msg');
+    if (msg) msg.classList.add('hidden');
+  }
+
+  function fillDraftSample(key) {
+    playClickSound(480);
+    const samples = {
+      remote_work: {
+        url: 'https://news.bloomberglaw.com/daily-labor-report/remote-work-location-pay-cuts-debate',
+        title: 'Remote Work Location Pay Cuts',
+        prompt: 'Should companies cut salaries when remote workers move to lower-cost regions?',
+        category: 'WORK_MOBILITY',
+        choices: [
+          'Yes, compensation must reflect local market rates.',
+          'No, value delivered is identical regardless of location.',
+          'Only if regional cost of living decreases by over 40%.',
+          'Tie pay to national median bands rather than local markets.'
+        ],
+        rationale: 'Value is produced by output and skill, not an employee\'s landlord costs.',
+        moral_lens: 'ECONOMIC_PRAGMATISM'
+      },
+      ai_copyright: {
+        url: 'https://arstechnica.com/tech-policy/2026/generative-ai-fair-use-training-data-split',
+        title: 'Generative AI Training & Fair Use',
+        prompt: 'Should AI developers pay mandatory statutory royalties for training on public creative works?',
+        category: 'EXISTENTIAL_TECH',
+        choices: [
+          'Yes, statutory royalties must compensate human creators.',
+          'No, publicly visible data is fair use for mathematical training.',
+          'Only for commercial models with over $100M revenue.',
+          'Create a collective public commons pool funded by compute taxes.'
+        ],
+        rationale: 'Without fair economic compensation for training data, creative livelihoods collapse.',
+        moral_lens: 'CIVIC_RECIPROCITY'
+      },
+      ev_mandate: {
+        url: 'https://reuters.com/business/autos-transportation/mandatory-ev-transition-timelines-2026',
+        title: '2035 Internal Combustion Phase-Out',
+        prompt: 'Should governments ban the sale of new gas vehicles by 2035 regardless of grid readiness?',
+        category: 'CIVIC_TRUST',
+        choices: [
+          'Yes, absolute climate deadlines are necessary to force industry transition.',
+          'No, market adoption and grid stability should dictate the timeline.',
+          'Exempt rural regions and heavy-duty utility vehicles permanently.',
+          'Subsidize plug-in hybrids as the primary intermediate transition step.'
+        ],
+        rationale: 'Forced bans before rural charging infrastructure is ubiquitous create severe socioeconomic divides.',
+        moral_lens: 'AUTONOMY'
+      }
+    };
+
+    const s = samples[key];
+    if (!s) return;
+    const urlEl = document.getElementById('custom-plot-url-input');
+    const titleEl = document.getElementById('draft-title');
+    const promptEl = document.getElementById('draft-prompt');
+    const catEl = document.getElementById('draft-category');
+    const chA = document.getElementById('draft-choice-A');
+    const chB = document.getElementById('draft-choice-B');
+    const chC = document.getElementById('draft-choice-C');
+    const chD = document.getElementById('draft-choice-D');
+    const ratEl = document.getElementById('draft-rationale');
+    const lensEl = document.getElementById('draft-moral-lens');
+
+    if (urlEl) urlEl.value = s.url;
+    if (titleEl) titleEl.value = s.title;
+    if (promptEl) promptEl.value = s.prompt;
+    if (catEl) catEl.value = s.category;
+    if (chA) chA.value = s.choices[0];
+    if (chB) chB.value = s.choices[1];
+    if (chC) chC.value = s.choices[2];
+    if (chD) chD.value = s.choices[3];
+    if (ratEl) ratEl.value = s.rationale;
+    if (lensEl) lensEl.value = s.moral_lens;
+  }
+
+  async function handleExtractDraft() {
+    const urlInput = document.getElementById('custom-plot-url-input');
+    const url = urlInput ? urlInput.value.trim() : '';
+    if (!url) {
+      alert('Please paste a URL or discussion topic first.');
+      return;
+    }
+
+    playClickSound(550);
+    const loading = document.getElementById('plot-draft-loading');
+    if (loading) loading.classList.remove('hidden');
+
+    try {
+      const draft = await AtlasAPI.extractPlotDraft(url);
+      if (draft && draft.choices && draft.choices.length >= 4) {
+        const titleEl = document.getElementById('draft-title');
+        const promptEl = document.getElementById('draft-prompt');
+        const catEl = document.getElementById('draft-category');
+        const chA = document.getElementById('draft-choice-A');
+        const chB = document.getElementById('draft-choice-B');
+        const chC = document.getElementById('draft-choice-C');
+        const chD = document.getElementById('draft-choice-D');
+
+        if (titleEl) titleEl.value = draft.title || 'Web Discussion Dilemma';
+        if (promptEl) promptEl.value = draft.prompt || 'What should be prioritized?';
+        if (catEl) catEl.value = draft.category || 'WORK_MOBILITY';
+        if (chA) chA.value = draft.choices[0].label || 'Option A';
+        if (chB) chB.value = draft.choices[1].label || 'Option B';
+        if (chC) chC.value = draft.choices[2].label || 'Option C';
+        if (chD) chD.value = draft.choices[3].label || 'Option D';
+      }
+    } catch (e) {
+      console.warn('Extract draft failed:', e);
+    } finally {
+      if (loading) loading.classList.add('hidden');
+    }
+  }
+
+  function selectCreatorVote(letter) {
+    selectedCreatorVote = letter;
+    ['A', 'B', 'C', 'D'].forEach(l => {
+      const btn = document.getElementById(`cvote-${l}`);
+      if (!btn) return;
+      if (l === letter) {
+        btn.className = 'creator-vote-btn py-2 font-mono font-bold text-xs border-2 border-[#C85A17] bg-[#FFF9ED] font-extrabold text-[#C85A17] rounded-lg shadow-xs cursor-pointer';
+      } else {
+        btn.className = 'creator-vote-btn py-2 font-mono font-bold text-xs border-2 border-[var(--ink)] bg-white hover:bg-amber-100 rounded-lg transition-all cursor-pointer';
+      }
+    });
+  }
+
+  async function submitCustomPlot() {
+    const title = document.getElementById('draft-title')?.value.trim() || 'Community Dilemma';
+    const prompt = document.getElementById('draft-prompt')?.value.trim();
+    if (!prompt) {
+      alert('Please enter a core prompt for the dilemma.');
+      return;
+    }
+
+    const category = document.getElementById('draft-category')?.value || 'WORK_MOBILITY';
+    const url = document.getElementById('custom-plot-url-input')?.value.trim() || '';
+    const rationale = document.getElementById('draft-rationale')?.value.trim() || '';
+    const moralLens = document.getElementById('draft-moral-lens')?.value || 'ECONOMIC_PRAGMATISM';
+
+    const chA = document.getElementById('draft-choice-A')?.value.trim() || 'Option A';
+    const chB = document.getElementById('draft-choice-B')?.value.trim() || 'Option B';
+    const chC = document.getElementById('draft-choice-C')?.value.trim() || 'Option C';
+    const chD = document.getElementById('draft-choice-D')?.value.trim() || 'Option D';
+
+    const payload = {
+      title: title,
+      prompt: prompt,
+      category: category,
+      domain: category,
+      canonical_url: url,
+      author_vote: selectedCreatorVote,
+      author_macro_region: (typeof userRegion !== 'undefined' ? userRegion : 'WEST_EUROPE'),
+      author_salt: currentRaterId,
+      rationale: rationale,
+      moral_lens: moralLens,
+      choices: [
+        { letter: 'A', label: chA, shape_symbol: 'circle', color_hex: '#E66101' },
+        { letter: 'B', label: chB, shape_symbol: 'triangle', color_hex: '#5D8AA8' },
+        { letter: 'C', label: chC, shape_symbol: 'square', color_hex: '#008856' },
+        { letter: 'D', label: chD, shape_symbol: 'diamond', color_hex: '#7B3294' }
+      ]
+    };
+
+    const submitBtn = document.getElementById('btn-submit-plot');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Publishing...</span>';
+    }
+
+    const res = await AtlasAPI.createCustomPlot(payload);
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>🚀 Publish Plot & Open Map</span>';
+    }
+
+    if (res && res.status === 'ok' && res.question) {
+      playChimeSound();
+      closeCreatePlotModal();
+
+      const newQ = {
+        id: res.question.question_id,
+        cat: res.question.category || category,
+        prompt: res.question.prompt,
+        slate_title: title,
+        choices: (res.question.choices || []).map(c => ({
+          letter: c.letter,
+          label: c.label,
+          shape_symbol: c.shape_symbol || '●',
+          color_hex: c.color_hex || '#C85A17'
+        }))
+      };
+
+      // Set as active question
+      questions[currentStep - 1] = newQ;
+      userVotesMap[newQ.id] = selectedCreatorVote;
+
+      // Transition to daily tab
+      switchTab('daily');
+      await goToStep(currentStep);
+
+      // Show toast
+      const toast = document.getElementById('deck-karma-toast');
+      const toastText = document.getElementById('deck-karma-toast-text');
+      if (toast && toastText) {
+        toastText.innerHTML = `🎉 Dilemma Published! Your founding vote (Option ${selectedCreatorVote}) and perspective are now live globally.`;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 5000);
+      }
+    } else {
+      const msg = document.getElementById('plot-publish-msg');
+      if (msg) {
+        msg.className = 'p-2.5 rounded-lg text-xs font-mono font-bold bg-rose-100 text-rose-900 border border-rose-300';
+        msg.textContent = res?.message || 'Failed to publish dilemma. Please check inputs.';
+        msg.classList.remove('hidden');
+      }
+    }
+  }
 
  // Hydrate application state and 30-day calendar on DOM load
  async function initSlateAndCalendar() {

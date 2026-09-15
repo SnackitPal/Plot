@@ -244,6 +244,55 @@ class AtlasDatabase:
                 """)
             except Exception:
                 pass
+            try:
+                conn.execute("ALTER TABLE questions ADD COLUMN canonical_url TEXT DEFAULT NULL;")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE questions ADD COLUMN url_hash TEXT DEFAULT NULL;")
+            except Exception:
+                pass
+            try:
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_questions_url_hash ON questions(url_hash);")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE perspectives ADD COLUMN moral_lens TEXT DEFAULT 'AUTONOMY';")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE perspectives ADD COLUMN in_group_helpful INTEGER NOT NULL DEFAULT 0;")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE perspectives ADD COLUMN in_group_total INTEGER NOT NULL DEFAULT 0;")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE perspectives ADD COLUMN out_group_helpful INTEGER NOT NULL DEFAULT 0;")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE perspectives ADD COLUMN out_group_total INTEGER NOT NULL DEFAULT 0;")
+            except Exception:
+                pass
+            try:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS perspective_evaluations (
+                        evaluation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        perspective_id TEXT NOT NULL,
+                        evaluator_salt TEXT NOT NULL,
+                        evaluator_choice TEXT NOT NULL,
+                        eval_type TEXT NOT NULL,
+                        is_out_group INTEGER NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(perspective_id) REFERENCES perspectives(perspective_id) ON DELETE CASCADE,
+                        UNIQUE(perspective_id, evaluator_salt)
+                    );
+                """)
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_evaluations_p ON perspective_evaluations(perspective_id, is_out_group);")
+            except Exception:
+                pass
 
 
 
@@ -290,6 +339,99 @@ class AtlasDatabase:
                    VALUES (?, ?, ?, ?, ?, ?);""",
                 (choice_id, question_id, letter, label, shape_symbol, color_hex),
             )
+
+    def create_custom_plot(
+        self,
+        title: str,
+        prompt: str,
+        category: str = "CULTURE",
+        domain: str = "CIVIC_TRUST",
+        choices: Optional[List[Dict[str, Any]]] = None,
+        canonical_url: Optional[str] = None,
+        url_hash: Optional[str] = None,
+        author_salt: Optional[str] = None,
+        author_vote: Optional[str] = None,
+        author_macro_region: Optional[str] = None,
+        author_rationale: Optional[str] = None,
+        author_moral_lens: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Creates a custom dilemma from a URL or topic, seeds choices, founding vote, and initial rationale."""
+        question_id = f"q_custom_{uuid.uuid4().hex[:8]}"
+        slate_id = "slate_community_custom"
+
+        # 1. Ensure community slate exists
+        with self._get_connection() as conn:
+            conn.execute(
+                """INSERT OR IGNORE INTO slates (slate_id, day_number, release_date, title, is_active)
+                   VALUES (?, 9999, '2099-12-31', 'Community Custom Plots', 1);""",
+                (slate_id,),
+            )
+
+        # 2. Add question
+        with self._get_connection() as conn:
+            conn.execute(
+                """INSERT OR REPLACE INTO questions
+                   (question_id, slate_id, order_idx, category, domain, prompt, canonical_url, url_hash)
+                   VALUES (?, ?, 1, ?, ?, ?, ?, ?);""",
+                (question_id, slate_id, category, domain, prompt, canonical_url, url_hash),
+            )
+
+        # 3. Add 4 choices
+        default_choices = [
+            {"letter": "A", "label": "Prioritize Individual Sovereignty", "shape_symbol": "circle", "color_hex": "#C85A17"},
+            {"letter": "B", "label": "Safeguard Communitarian Cohesion", "shape_symbol": "triangle", "color_hex": "#003153"},
+            {"letter": "C", "label": "Contextual & Measured Compromise", "shape_symbol": "square", "color_hex": "#2E7D32"},
+            {"letter": "D", "label": "Institutional Precedent & Stability", "shape_symbol": "diamond", "color_hex": "#8E24AA"},
+        ]
+        chosen_list = choices if choices and len(choices) >= 2 else default_choices
+        for idx, c in enumerate(chosen_list[:4]):
+            let = c.get("letter") or chr(65 + idx)
+            lbl = c.get("label") or c.get("text") or f"Option {let}"
+            sym = c.get("shape_symbol") or default_choices[idx]["shape_symbol"]
+            col = c.get("color_hex") or default_choices[idx]["color_hex"]
+            self.add_choice(
+                choice_id=f"c_{question_id}_{let}",
+                question_id=question_id,
+                letter=let,
+                label=lbl,
+                shape_symbol=sym,
+                color_hex=col,
+            )
+
+        # 4. Founding vote if cast
+        if author_vote and author_vote in ("A", "B", "C", "D"):
+            from atlas.geo.regions import get_h3_cell_for_region
+            reg = author_macro_region or "WEST_EUROPE"
+            cell = get_h3_cell_for_region(reg)
+            self.record_tier_hex_vote(question_id, cell, author_vote, tier_level=1, increment=1)
+            if author_salt:
+                self.record_user_vote(author_salt, question_id, author_vote, reg, tier_level=1)
+
+        # 5. Founding perspective if provided
+        if author_rationale and author_vote and author_salt:
+            lens = author_moral_lens or "AUTONOMY"
+            pid = f"p_{uuid.uuid4().hex[:8]}"
+            with self._get_connection() as conn:
+                conn.execute(
+                    """INSERT INTO perspectives
+                       (perspective_id, question_id, choice_letter, body, author_salt,
+                        author_macro_region, moral_lens, in_group_helpful, in_group_total, moderation_status)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 'APPROVED');""",
+                    (pid, question_id, author_vote, author_rationale[:280], author_salt, author_macro_region or "WEST_EUROPE", lens),
+                )
+
+        return self.get_question(question_id)
+
+    def lookup_plot_by_url(self, url_hash: str) -> Optional[Dict[str, Any]]:
+        """Look up an existing question by canonical URL hash."""
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT question_id FROM questions WHERE url_hash = ? LIMIT 1;",
+                (url_hash,),
+            ).fetchone()
+            if row:
+                return self.get_question(row["question_id"])
+        return None
 
     def get_active_slate(self, slate_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Fetch the active slate and all of its questions and choices."""
@@ -488,14 +630,15 @@ class AtlasDatabase:
         author_macro_region: str = "UNSPECIFIED",
         moderation_status: str = "APPROVED",
         moderation_flags: str = "",
+        moral_lens: str = "AUTONOMY",
     ) -> None:
         with self._get_connection() as conn:
             conn.execute(
                 """INSERT OR REPLACE INTO perspectives 
                    (perspective_id, question_id, choice_letter, body, author_salt,
                     author_generation, author_urbanicity, author_macro_region,
-                    moderation_status, moderation_flags)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);""",
+                    moderation_status, moderation_flags, moral_lens)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);""",
                 (
                     perspective_id,
                     question_id,
@@ -507,6 +650,7 @@ class AtlasDatabase:
                     author_macro_region,
                     moderation_status,
                     moderation_flags,
+                    moral_lens,
                 ),
             )
 
@@ -521,6 +665,7 @@ class AtlasDatabase:
         author_macro_region: str = "UNSPECIFIED",
         moderation_status: str = "APPROVED",
         moderation_flags: str = "",
+        moral_lens: str = "AUTONOMY",
     ) -> str:
         """Generates unique perspective_id, saves community submission, and returns the id."""
         perspective_id = f"p_{uuid.uuid4().hex[:8]}"
@@ -535,6 +680,7 @@ class AtlasDatabase:
             author_macro_region=author_macro_region,
             moderation_status=moderation_status,
             moderation_flags=moderation_flags,
+            moral_lens=moral_lens,
         )
         return perspective_id
 
@@ -704,6 +850,185 @@ class AtlasDatabase:
                 (question_id,),
             ).fetchall()
         return [dict(r) for r in rows]
+
+    def get_perspectives_by_stance(
+        self, question_id: str, viewer_stance: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Partitions perspectives into 4 stance bays (A, B, C, D) with
+        Two-Sided Mutual Ratification math (in-group legitimacy + out-group steelman approval)
+        and identifies the sacred bridging perspective for each bay.
+        """
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                """SELECT p.perspective_id, p.question_id, p.choice_letter, p.body, p.author_salt,
+                          COALESCE(p.author_generation, 'UNSPECIFIED') as author_generation,
+                          COALESCE(p.author_urbanicity, 'UNSPECIFIED') as author_urbanicity,
+                          COALESCE(p.author_macro_region, 'WEST_EUROPE') as author_macro_region,
+                          COALESCE(p.moral_lens, 'AUTONOMY') as moral_lens,
+                          COALESCE(p.in_group_helpful, 0) as in_group_helpful,
+                          COALESCE(p.in_group_total, 0) as in_group_total,
+                          COALESCE(p.out_group_helpful, 0) as out_group_helpful,
+                          COALESCE(p.out_group_total, 0) as out_group_total,
+                          COALESCE(p.moderation_status, 'APPROVED') as moderation_status,
+                          p.created_at
+                   FROM perspectives p
+                   WHERE p.question_id = ? AND (p.moderation_status = 'APPROVED' OR p.moderation_status IS NULL)
+                   ORDER BY p.created_at ASC;""",
+                (question_id,),
+            ).fetchall()
+
+        bays: Dict[str, Dict[str, Any]] = {
+            "A": {"choice_letter": "A", "total": 0, "perspectives": [], "bridging_perspective": None},
+            "B": {"choice_letter": "B", "total": 0, "perspectives": [], "bridging_perspective": None},
+            "C": {"choice_letter": "C", "total": 0, "perspectives": [], "bridging_perspective": None},
+            "D": {"choice_letter": "D", "total": 0, "perspectives": [], "bridging_perspective": None},
+        }
+
+        region_to_city = {
+            "US_WEST": "San Francisco",
+            "US_EAST": "New York",
+            "CANADA": "Toronto",
+            "MEXICO": "Mexico City",
+            "BRAZIL": "São Paulo",
+            "SOUTHERN_CONE": "Buenos Aires",
+            "UK_IRELAND": "London",
+            "WEST_EUROPE": "Berlin",
+            "SOUTH_EUROPE": "Rome",
+            "NORDICS": "Stockholm",
+            "EAST_EUROPE": "Warsaw",
+            "NORTH_AFRICA": "Cairo",
+            "SUB_SAHARAN_AFRICA": "Nairobi",
+            "SOUTH_AFRICA": "Cape Town",
+            "MIDDLE_EAST": "Dubai",
+            "CENTRAL_ASIA": "Almaty",
+            "SOUTH_ASIA": "Mumbai",
+            "EAST_ASIA": "Tokyo",
+            "SOUTHEAST_ASIA": "Singapore",
+            "OCEANIA": "Sydney",
+        }
+
+        for r in rows:
+            item = dict(r)
+            letter = item["choice_letter"].upper()
+            if letter not in bays:
+                continue
+
+            in_h = item["in_group_helpful"]
+            in_t = item["in_group_total"]
+            out_h = item["out_group_helpful"]
+            out_t = item["out_group_total"]
+
+            in_cohesion = (in_h + 1.0) / (in_t + 2.0)
+            out_approval = (out_h + 1.0) / (out_t + 2.0)
+            is_ratified = in_cohesion >= 0.60
+            bridging_score = 2.0 * (out_approval * in_cohesion) / (out_approval + in_cohesion + 0.001)
+
+            reg = item["author_macro_region"]
+            city = region_to_city.get(reg, "Global Centroid")
+            item["city_centroid"] = city
+            item["in_cohesion"] = round(in_cohesion, 2)
+            item["out_approval"] = round(out_approval, 2)
+            item["is_ratified"] = is_ratified
+            item["bridging_score"] = round(bridging_score, 3)
+            item["is_sacred_bridge"] = False
+
+            bays[letter]["perspectives"].append(item)
+            bays[letter]["total"] += 1
+
+        for letter, bay in bays.items():
+            plist = bay["perspectives"]
+            if not plist:
+                continue
+
+            plist.sort(key=lambda x: (x["is_ratified"], x["bridging_score"], x["out_approval"]), reverse=True)
+            best = plist[0]
+            best["is_sacred_bridge"] = True
+            bay["bridging_perspective"] = best
+
+        return {
+            "question_id": question_id,
+            "viewer_stance": viewer_stance,
+            "bays": bays
+        }
+
+    def rate_perspective_coherence(
+        self,
+        perspective_id: str,
+        rater_salt: str,
+        rater_choice: str,
+        eval_type: str = "FAIR_STEELMAN"
+    ) -> Dict[str, Any]:
+        """
+        Records a coherence rating (FAIR_STEELMAN, NUANCED_TRADEOFF, UNSUBSTANTIATED)
+        and updates the mutual ratification tallies.
+        """
+        eval_type = eval_type.upper()
+        if eval_type not in ("FAIR_STEELMAN", "NUANCED_TRADEOFF", "UNSUBSTANTIATED"):
+            eval_type = "FAIR_STEELMAN"
+
+        with self._get_connection() as conn:
+            p_row = conn.execute(
+                "SELECT perspective_id, choice_letter FROM perspectives WHERE perspective_id = ?;",
+                (perspective_id,)
+            ).fetchone()
+            if not p_row:
+                return {"status": "error", "message": "Perspective not found"}
+
+            p_choice = p_row["choice_letter"]
+            is_out_group = 1 if (rater_choice and rater_choice != p_choice) else 0
+
+            conn.execute(
+                """INSERT INTO perspective_evaluations
+                   (perspective_id, evaluator_salt, evaluator_choice, eval_type, is_out_group, created_at)
+                   VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                   ON CONFLICT(perspective_id, evaluator_salt) DO UPDATE SET
+                       evaluator_choice = excluded.evaluator_choice,
+                       eval_type = excluded.eval_type,
+                       is_out_group = excluded.is_out_group;""",
+                (perspective_id, rater_salt, rater_choice, eval_type, is_out_group)
+            )
+
+            # Re-aggregate counts
+            in_h = conn.execute(
+                """SELECT COUNT(*) FROM perspective_evaluations
+                   WHERE perspective_id = ? AND is_out_group = 0 AND eval_type IN ('FAIR_STEELMAN', 'NUANCED_TRADEOFF');""",
+                (perspective_id,)
+            ).fetchone()[0]
+            in_t = conn.execute(
+                "SELECT COUNT(*) FROM perspective_evaluations WHERE perspective_id = ? AND is_out_group = 0;",
+                (perspective_id,)
+            ).fetchone()[0]
+            out_h = conn.execute(
+                """SELECT COUNT(*) FROM perspective_evaluations
+                   WHERE perspective_id = ? AND is_out_group = 1 AND eval_type IN ('FAIR_STEELMAN', 'NUANCED_TRADEOFF');""",
+                (perspective_id,)
+            ).fetchone()[0]
+            out_t = conn.execute(
+                "SELECT COUNT(*) FROM perspective_evaluations WHERE perspective_id = ? AND is_out_group = 1;",
+                (perspective_id,)
+            ).fetchone()[0]
+
+            conn.execute(
+                """UPDATE perspectives SET
+                   in_group_helpful = ?,
+                   in_group_total = ?,
+                   out_group_helpful = ?,
+                   out_group_total = ?
+                   WHERE perspective_id = ?;""",
+                (in_h, in_t, out_h, out_t, perspective_id)
+            )
+
+        return {
+            "status": "ok",
+            "perspective_id": perspective_id,
+            "eval_type": eval_type,
+            "is_out_group": bool(is_out_group),
+            "in_group_helpful": in_h,
+            "in_group_total": in_t,
+            "out_group_helpful": out_h,
+            "out_group_total": out_t
+        }
 
     def record_perspective_impression(
         self, perspective_id: str, rater_salt: str, cohort_val: str

@@ -22,10 +22,12 @@ import json
 import uuid
 import socket
 import html
+import re
+import hashlib
 import threading
 import urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 
 # Ensure UTF-8 output encoding on Windows if supported
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
@@ -204,6 +206,121 @@ def file_watcher_thread():
         time.sleep(0.5)
 
 
+def compute_canonical_hash(raw_url: str) -> Tuple[str, str]:
+    """Deterministically normalizes a URL and returns (canonical_url, sha256_hash)."""
+    if not raw_url:
+        return "", ""
+    parsed = urllib.parse.urlparse(raw_url.strip())
+    raw_host = (parsed.hostname or "").lower()
+    if raw_host.startswith("www."):
+        raw_host = raw_host[4:]
+
+    path = parsed.path
+    tracking_params = {
+        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+        'fbclid', 'gclid', 'msclkid', 'mc_cid', 'ref', 'source', 'feature',
+        'si', 'igshid', 's', 't', 'list', 'index'
+    }
+
+    if raw_host in ("youtube.com", "youtu.be"):
+        hostname = "youtube.com"
+        if raw_host == "youtu.be":
+            v_id = parsed.path.lstrip("/")
+        elif parsed.path.startswith("/shorts/"):
+            v_id = parsed.path.split("/")[2] if len(parsed.path.split("/")) > 2 else ""
+        else:
+            qs = urllib.parse.parse_qs(parsed.query)
+            v_id = qs.get("v", [""])[0]
+        path = "/watch"
+        query_str = f"v={v_id}" if v_id else ""
+    elif "reddit.com" in raw_host or raw_host == "redd.it":
+        hostname = "reddit.com"
+        m = re.match(r"/r/([^/]+)/comments/([^/]+)", path)
+        if m:
+            path = f"/r/{m.group(1).lower()}/comments/{m.group(2).lower()}"
+        query_str = ""
+    else:
+        hostname = raw_host
+        qs = urllib.parse.parse_qs(parsed.query)
+        cleaned = {k: v for k, v in qs.items() if k.lower() not in tracking_params and not k.lower().startswith("utm_")}
+        sorted_keys = sorted(cleaned.keys())
+        pairs = []
+        for k in sorted_keys:
+            for val in cleaned[k]:
+                pairs.append((k, val))
+        query_str = urllib.parse.urlencode(pairs)
+
+    if len(path) > 1 and path.endswith("/"):
+        path = path[:-1]
+
+    canonical_url = f"https://{hostname}{path}"
+    if query_str:
+        canonical_url += f"?{query_str}"
+
+    url_hash = hashlib.sha256(canonical_url.encode("utf-8")).hexdigest()
+    return canonical_url, url_hash
+
+
+def extract_dilemma_draft(url: str, text_excerpt: str = "", title: str = "") -> Dict[str, Any]:
+    """Generates 4 MECE choices aligned with PLOT's sociological axes."""
+    canonical_url, url_hash = compute_canonical_hash(url)
+    clean_title = title.strip() if title else "Web Discussion Dilemma"
+    if clean_title == "Web Discussion Dilemma" and url:
+        parsed = urllib.parse.urlparse(canonical_url)
+        clean_title = f"Dilemma: {parsed.netloc}{parsed.path[:30]}"
+
+    domain = (urllib.parse.urlparse(canonical_url).hostname or "").lower()
+    lower_title = clean_title.lower()
+    lower_text = text_excerpt.lower()
+
+    if "youtube.com" in domain or "video" in lower_title:
+        prompt = f"When evaluating viewpoints in '{clean_title[:70]}', what principle should govern public expression?"
+        choices = [
+            {"letter": "A", "label": "Individual Expression: Creators must have unconstrained voice.", "shape_symbol": "circle", "color_hex": "#C85A17", "philosophical_value": "Rights-First Autonomy"},
+            {"letter": "B", "label": "Harm Reduction: Restrict misleading, extreme, or disruptive rhetoric.", "shape_symbol": "triangle", "color_hex": "#003153", "philosophical_value": "Communitarian Duty"},
+            {"letter": "C", "label": "Contextual Standards: Apply age-gates and audience-specific disclosures.", "shape_symbol": "square", "color_hex": "#2E7D32", "philosophical_value": "Pragmatic Compromise"},
+            {"letter": "D", "label": "Viewer Sovereignty: Allow local viewer cohorts to set community moderation.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Decentralized Precedent"}
+        ]
+        category = "DIGITAL_COMMONS"
+    elif "reddit.com" in domain or "aita" in lower_title or "relationship" in lower_text or "reddit" in lower_title:
+        prompt = f"In the interpersonal tension highlighted in '{clean_title[:70]}', where should personal boundaries lie?"
+        choices = [
+            {"letter": "A", "label": "Personal Sovereignty: Individual boundaries take precedence over family or social expectations.", "shape_symbol": "circle", "color_hex": "#C85A17", "philosophical_value": "Individual Sovereignty"},
+            {"letter": "B", "label": "Relational Obligation: Family and group harmony override personal comfort.", "shape_symbol": "triangle", "color_hex": "#003153", "philosophical_value": "Communitarian Harmony"},
+            {"letter": "C", "label": "Reciprocal Fairness: Accommodate only when proportional effort is returned.", "shape_symbol": "square", "color_hex": "#2E7D32", "philosophical_value": "Reciprocal Fairness"},
+            {"letter": "D", "label": "Cultural Tradition: Follow established precedent and social protocol.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Cultural Precedent"}
+        ]
+        category = "COMMUNITY"
+    elif any(kw in lower_text or kw in lower_title for kw in ("work", "salary", "remote", "commute", "office", "job", "career")):
+        prompt = f"Regarding workplace trade-offs discussed in '{clean_title[:70]}', how should compensation and flexibility align?"
+        choices = [
+            {"letter": "A", "label": "Worker Autonomy: Full location flexibility without salary penalties.", "shape_symbol": "circle", "color_hex": "#C85A17", "philosophical_value": "Worker Agency"},
+            {"letter": "B", "label": "Local Parity: Pay must reflect local cost of living and local market value.", "shape_symbol": "triangle", "color_hex": "#003153", "philosophical_value": "Communal Parity"},
+            {"letter": "C", "label": "Measured Compromise: Tiered pay structures tied to on-site requirements.", "shape_symbol": "square", "color_hex": "#2E7D32", "philosophical_value": "Pragmatic Compromise"},
+            {"letter": "D", "label": "Institutional Presence: Physical presence drives superior long-term culture.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Institutional Precedent"}
+        ]
+        category = "WORK_MOBILITY"
+    else:
+        prompt = f"In evaluating the moral tension raised in '{clean_title[:70]}', which principle takes priority?"
+        choices = [
+            {"letter": "A", "label": "Individual Rights: Protect private autonomy and freedom of choice.", "shape_symbol": "circle", "color_hex": "#C85A17", "philosophical_value": "Rights-First Deontology"},
+            {"letter": "B", "label": "Collective Welfare: Prioritize public order, common good, and equity.", "shape_symbol": "triangle", "color_hex": "#003153", "philosophical_value": "Utilitarian Welfare"},
+            {"letter": "C", "label": "Contextual Thresholds: Pragmatic compromises with local opt-outs.", "shape_symbol": "square", "color_hex": "#2E7D32", "philosophical_value": "Pragmatic Pluralism"},
+            {"letter": "D", "label": "Institutional Stability: Respect long-standing structural precedent.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Institutional Precedent"}
+        ]
+        category = "CIVIC_TRUST"
+
+    return {
+        "title": clean_title,
+        "prompt": prompt,
+        "canonical_url": canonical_url,
+        "url_hash": url_hash,
+        "category": category,
+        "domain": category,
+        "choices": choices
+    }
+
+
 class AtlasRequestHandler(SimpleHTTPRequestHandler):
     """
     Multi-Threaded HTTP and REST API Router for PLOT.
@@ -335,8 +452,8 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(content)
                 return
 
-        # PWA Service Worker: GET /sw.js
-        if path == "/sw.js":
+        # PWA Service Worker: GET /sw.js or /preview/sw.js
+        if path in ("/sw.js", "/preview/sw.js"):
             sw_path = os.path.join(PREVIEW_DIR, "sw.js")
             if os.path.exists(sw_path):
                 with open(sw_path, "rb") as f:
@@ -529,6 +646,36 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 "results": paginated,
             })
             return
+
+        # REST API: GET /api/plots/lookup
+        if path == "/api/plots/lookup":
+            query_params = urllib.parse.parse_qs(parsed_url.query)
+            url_param = query_params.get("url", [""])[0].strip()
+            hash_param = query_params.get("url_hash", [""])[0].strip()
+            if url_param and not hash_param:
+                _, hash_param = compute_canonical_hash(url_param)
+
+            if not hash_param:
+                self._send_json(400, {"status": "error", "message": "Missing url or url_hash parameter"})
+                return
+
+            plot = db.lookup_plot_by_url(hash_param)
+            if plot:
+                self._send_json(200, {"status": "ok", "exists": True, "plot": plot})
+            else:
+                self._send_json(200, {"status": "ok", "exists": False, "url_hash": hash_param})
+            return
+
+        # REST API: GET /api/perspectives/:question_id/by_stance
+        if path.startswith("/api/perspectives/") and "/by_stance" in path:
+            parts = path.split("/")
+            if len(parts) >= 4:
+                question_id = parts[3]
+                query_params = urllib.parse.parse_qs(parsed_url.query)
+                viewer_stance = query_params.get("viewer_stance", [None])[0]
+                dossier = db.get_perspectives_by_stance(question_id, viewer_stance=viewer_stance)
+                self._send_json(200, {"status": "ok", "stance_dossier": dossier})
+                return
 
         # 9. REST API: GET /api/perspectives/:question_id/cohorts
         if path.startswith("/api/perspectives/") and "/cohorts" in path:
@@ -877,6 +1024,7 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
             author_generation = (body.get("author_generation") or "UNSPECIFIED").strip()
             author_urbanicity = (body.get("author_urbanicity") or "UNSPECIFIED").strip()
             author_macro_region = (body.get("author_macro_region") or "UNSPECIFIED").strip()
+            moral_lens = (body.get("moral_lens") or "AUTONOMY").strip()
 
             if not question_id or choice_letter not in ("A", "B", "C", "D"):
                 self._send_json(400, {"status": "error", "message": "Invalid question_id or choice_letter"})
@@ -905,6 +1053,7 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 author_macro_region=author_macro_region,
                 moderation_status="APPROVED",
                 moderation_flags="",
+                moral_lens=moral_lens,
             )
             mark_perspectives_dirty(question_id)
 
@@ -1014,6 +1163,101 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                     mark_perspectives_dirty(row["question_id"])
 
             self._send_json(200, rate_res)
+            return
+
+        # REST API: POST /api/plots/extract-draft
+        if path == "/api/plots/extract-draft":
+            body = self._read_json_body()
+            if not body:
+                self._send_json(400, {"status": "error", "message": "Invalid JSON body"})
+                return
+
+            raw_url = (body.get("url") or "").strip()
+            text_excerpt = (body.get("text_excerpt") or "").strip()
+            title = (body.get("title") or "").strip()
+
+            if not raw_url and not title:
+                self._send_json(400, {"status": "error", "message": "Missing url or title"})
+                return
+
+            draft = extract_dilemma_draft(raw_url, text_excerpt=text_excerpt, title=title)
+            self._send_json(200, {"status": "ok", "draft": draft})
+            return
+
+        # REST API: POST /api/plots/create
+        if path == "/api/plots/create":
+            body = self._read_json_body()
+            if not body:
+                self._send_json(400, {"status": "error", "message": "Invalid JSON body"})
+                return
+
+            title = (body.get("title") or "").strip()
+            prompt = (body.get("prompt") or "").strip()
+            category = (body.get("category") or "CULTURE").strip()
+            domain = (body.get("domain") or category).strip()
+            choices = body.get("choices")
+            canonical_url = body.get("canonical_url")
+            url_hash = body.get("url_hash")
+            if canonical_url and not url_hash:
+                _, url_hash = compute_canonical_hash(canonical_url)
+
+            author_salt = body.get("author_salt")
+            author_vote = body.get("author_vote")
+            author_macro_region = body.get("author_macro_region") or "WEST_EUROPE"
+            author_rationale = body.get("rationale") or body.get("author_rationale")
+            author_moral_lens = body.get("moral_lens") or "AUTONOMY"
+
+            if not title or not prompt:
+                self._send_json(400, {"status": "error", "message": "Title and prompt are required"})
+                return
+
+            question = db.create_custom_plot(
+                title=title,
+                prompt=prompt,
+                category=category,
+                domain=domain,
+                choices=choices,
+                canonical_url=canonical_url,
+                url_hash=url_hash,
+                author_salt=author_salt,
+                author_vote=author_vote,
+                author_macro_region=author_macro_region,
+                author_rationale=author_rationale,
+                author_moral_lens=author_moral_lens,
+            )
+
+            self._send_json(201, {
+                "status": "ok",
+                "message": "Plot created successfully",
+                "question": question,
+                "question_id": question["question_id"],
+                "slate_id": question["slate_id"],
+            })
+            return
+
+        # REST API: POST /api/perspectives/rate_coherence
+        if path == "/api/perspectives/rate_coherence":
+            body = self._read_json_body()
+            if not body:
+                self._send_json(400, {"status": "error", "message": "Invalid JSON body"})
+                return
+
+            perspective_id = body.get("perspective_id")
+            rater_salt = body.get("rater_salt") or f"rater_{uuid.uuid4().hex[:6]}"
+            rater_choice = (body.get("rater_choice") or "").upper()
+            eval_type = (body.get("eval_type") or "FAIR_STEELMAN").upper()
+
+            if not perspective_id:
+                self._send_json(400, {"status": "error", "message": "perspective_id is required"})
+                return
+
+            rate_eval = db.rate_perspective_coherence(
+                perspective_id=perspective_id,
+                rater_salt=rater_salt,
+                rater_choice=rater_choice,
+                eval_type=eval_type,
+            )
+            self._send_json(200, rate_eval)
             return
 
         # 4. REST API: POST /api/calibrate (Epistemic Prediction Challenge)
