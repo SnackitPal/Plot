@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PLOT — Deliberation SidePanel</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <style>
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .space-y-2 > * + * { margin-top: 8px; }
+    .space-y-3 > * + * { margin-top: 12px; }
+    .text-xs { font-size: 11px; }
+    .text-sm { font-size: 13px; }
+    .text-base { font-size: 14px; }
+    .font-bold { font-weight: 700; }
+    .w-full { width: 100%; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+  <!-- Masthead Row -->
+  <div class="tactile-card" style="padding: 8px 12px; margin-bottom: 8px;">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent-terra); display: inline-block;"></span>
+        <span class="font-display font-bold" style="font-size: 14px; letter-spacing: 0.5px;">PLOT</span>
+        <span class="font-mono text-xs" style="background: #F4EFE6; padding: 2px 5px; border-radius: 4px; border: 1px solid #D1D5DB; color: #4B5563;">PANEL</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="backend-status-indicator" class="flex items-center gap-1 font-mono text-xs" style="color: #059669; font-weight: 700;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10B981; display: inline-block;"></span>
+          <span id="backend-status-text">Connected</span>
+        </span>
+        <button type="button" id="btn-toggle-settings" class="tactile-btn" style="padding: 2px 6px; font-size: 11px;" title="Settings">
+          ⚙️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Drawer (Collapsible) -->
+  <div id="settings-drawer" class="tactile-card hidden" style="background: #FFFDF9; border-color: #C85A17;">
+    <div class="flex items-center justify-between" style="margin-bottom: 8px; border-bottom: 1px dashed #D1D5DB; padding-bottom: 4px;">
+      <span class="font-bold text-xs" style="color: #C85A17;">Extension Configuration</span>
+      <button type="button" id="btn-close-settings" class="tactile-btn" style="padding: 1px 6px; font-size: 10px;">✕</button>
+    </div>
+    <div class="space-y-2 text-xs">
+      <div>
+        <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">Backend URL:</label>
+        <input type="text" id="setting-backend-url" value="http://localhost:8000" class="w-full font-mono p-1 border rounded" style="border: 1px solid #18181B; border-radius: 6px; padding: 4px;">
+      </div>
+      <div>
+        <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">AI Dilemma Mode:</label>
+        <select id="setting-ai-mode" class="w-full font-mono p-1 border rounded" style="border: 1px solid #18181B; border-radius: 6px; padding: 4px; background: white;">
+          <option value="edge">Mode 1: Serverless Edge (Gemini Flash)</option>
+          <option value="local">Mode 2: Chrome Built-in AI (window.ai Nano)</option>
+          <option value="byok">Mode 3: Personal BYOK API Key</option>
+          <option value="manual">Mode 4: Manual Human Template</option>
+        </select>
+      </div>
+      <div id="byok-container" class="hidden">
+        <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">BYOK API Key:</label>
+        <input type="password" id="setting-byok-key" placeholder="AIzaSy... or gsk_..." class="w-full font-mono p-1 border rounded" style="border: 1px solid #18181B; border-radius: 6px; padding: 4px;">
+      </div>
+      <button type="button" id="btn-save-settings" class="tactile-btn w-full" style="padding: 4px; background: #18181B; color: white; margin-top: 6px;">
+        Save Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- Page Context Inspector Bar -->
+  <div class="tactile-card" style="padding: 8px 10px; margin-bottom: 8px; background: #F7F3EA;">
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 truncate" style="flex: 1;">
+        <span id="page-platform-badge" class="badge-platform badge-web shrink-0">WEB</span>
+        <span id="page-title-display" class="font-mono text-xs font-bold truncate text-gray-800" title="Inspecting active tab...">
+          Detecting active discussion...
+        </span>
+      </div>
+      <button type="button" id="btn-rescan-page" class="tactile-btn" style="padding: 2px 6px; font-size: 10px;" title="Re-scan active page">
+        🔄
+      </button>
+    </div>
+  </div>
+
+  <!-- STATE A: Existing Plot Found -->
+  <div id="state-existing-plot" class="hidden space-y-3">
+    <div class="tactile-card">
+      <div class="flex items-center justify-between" style="margin-bottom: 6px;">
+        <span id="plot-category-badge" class="font-mono text-xs font-bold" style="background: #FFF3B0; color: #8A6508; padding: 1px 6px; border-radius: 4px; border: 1px solid #F6E05E; text-transform: uppercase;">
+          DELIBERATION
+        </span>
+        <span id="plot-votes-badge" class="font-mono text-xs text-gray-500">
+          84.3k votes
+        </span>
+      </div>
+      <h3 id="plot-prompt" class="font-display font-bold text-sm leading-snug" style="margin-bottom: 10px;">
+        Dilemma prompt loading...
+      </h3>
+
+      <!-- 4 MECE Choices -->
+      <div id="choices-container" class="space-y-2">
+        <!-- Rendered by sidepanel.js -->
+      </div>
+
+      <!-- Voter Latch Strip -->
+      <div id="voter-status-strip" class="hidden" style="margin-top: 10px; padding: 6px 10px; border-radius: 8px; background: #FAF6EE; border: 1px solid #D1D5DB; font-size: 11px; font-family: monospace; display: flex; align-items: center; justify-content: space-between;">
+        <div class="flex items-center gap-1">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10B981; display: inline-block;"></span>
+          <span id="voter-status-text" class="font-bold">Vote Locked</span>
+        </div>
+        <span class="text-gray-500">Nuance Unlocked ↓</span>
+      </div>
+    </div>
+
+    <!-- Mini Regional Consensus Strip -->
+    <div id="regional-strip-card" class="tactile-card hidden" style="padding: 8px 10px;">
+      <div class="flex items-center justify-between" style="margin-bottom: 6px;">
+        <span class="font-mono text-xs font-bold text-gray-600">Regional Leads (19 Regions):</span>
+      </div>
+      <div id="mini-regional-strip" class="flex gap-1" style="overflow-x: auto; padding-bottom: 4px;">
+        <!-- Regional chips -->
+      </div>
+    </div>
+
+    <!-- Stance-First Nuance Shelf -->
+    <div id="nuance-card" class="tactile-card hidden" style="padding: 10px;">
+      <div class="flex items-center justify-between" style="margin-bottom: 6px;">
+        <span class="font-display font-bold text-xs">Stance-First Nuance</span>
+        <span class="font-mono text-xs text-gray-500">Cross-Stance Steelmans</span>
+      </div>
+      
+      <!-- Stance Tabs -->
+      <div id="stance-tabs-strip" class="flex gap-1" style="margin-bottom: 8px; overflow-x: auto; padding-bottom: 2px;">
+        <!-- Tabs A, B, C, D -->
+      </div>
+
+      <!-- Counterweight Callout -->
+      <div id="stance-callout-banner" class="text-xs" style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; color: #92400E;">
+        <span id="stance-callout-text">Viewing counterweight arguments rated constructive by opposing voters.</span>
+      </div>
+
+      <!-- Perspective Card -->
+      <div id="perspective-card" style="background: #FAF6EE; border: 1px solid #D1D5DB; border-radius: 8px; padding: 8px;">
+        <div class="flex items-center justify-between" style="margin-bottom: 4px;">
+          <span id="card-author" class="font-mono font-bold text-xs text-gray-700">@local_citizen</span>
+          <span id="card-moral-lens" class="font-mono text-xs" style="background: #E0E7FF; color: #3730A3; padding: 1px 4px; border-radius: 3px;">[AUTONOMY]</span>
+        </div>
+        <p id="card-body" class="text-xs font-serif italic text-gray-900" style="margin-bottom: 8px; line-height: 1.4;">
+          "Perspective body text..."
+        </p>
+        <div class="flex items-center justify-between" style="border-top: 1px dashed #D1D5DB; padding-top: 6px;">
+          <span id="card-agreement-pct" class="font-mono text-xs text-gray-600">🤝 76% Agreement</span>
+          <div class="flex gap-1">
+            <button type="button" id="btn-ratify-steelman" class="tactile-btn" style="padding: 2px 6px; font-size: 10px; background: #ECFDF5; color: #065F46; border-color: #10B981;">
+              ⚖️ Steelman
+            </button>
+            <button type="button" id="btn-ratify-tradeoff" class="tactile-btn" style="padding: 2px 6px; font-size: 10px; background: #EFF6FF; color: #1E40AF; border-color: #3B82F6;">
+              ✨ Tradeoff
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Atlas Bridge Link -->
+    <div style="text-align: center; padding: 4px;">
+      <a id="link-open-full-atlas" href="http://localhost:8000/preview/index.html" target="_blank" rel="noopener" class="tactile-btn w-full" style="padding: 8px; background: var(--ink); color: white; text-decoration: none; font-size: 12px;">
+        🌐 Explore Full World Map in Cultural Atlas ➔
+      </a>
+    </div>
+  </div>
+
+  <!-- STATE B: Cold Start (No Plot Yet on Active Page) -->
+  <div id="state-cold-start" class="hidden space-y-3">
+    <div class="tactile-card" style="text-align: center; padding: 20px 14px;">
+      <div style="font-size: 28px; margin-bottom: 8px;">🧭</div>
+      <h3 class="font-display font-bold text-sm" style="margin-bottom: 6px;">
+        No Deliberation Plotted Yet
+      </h3>
+      <p class="text-xs text-gray-600" style="margin-bottom: 14px; line-height: 1.4;">
+        Nobody has mapped the cultural tension in this discussion yet. Be the founding architect for this page.
+      </p>
+      <button type="button" id="btn-draft-plot-cta" class="tactile-btn w-full" style="padding: 10px; background: var(--accent-terra); color: white; font-size: 12px; margin-bottom: 10px;">
+        ⚡ Draft Plot from this Page (1-Tap)
+      </button>
+      <p class="text-xs text-gray-400 font-mono">
+        Extracts MECE 4-choice dilemma & seed perspectives in &lt;15s
+      </p>
+    </div>
+
+    <!-- Today's Slate Recommendation -->
+    <div class="tactile-card" style="padding: 10px;">
+      <span class="font-mono text-xs font-bold text-gray-500 block" style="margin-bottom: 4px;">Or explore today's global dilemma:</span>
+      <a id="link-daily-dilemma" href="http://localhost:8000/preview/index.html" target="_blank" rel="noopener" class="font-display font-bold text-xs text-gray-800 hover:text-amber-700 no-underline block" style="margin-bottom: 6px;">
+        "Would you accept a 30% pay cut to never commute again?" ➔
+      </a>
+    </div>
+  </div>
+
+  <!-- STATE C: Proof Sheet Draft Editor -->
+  <div id="state-draft-editor" class="hidden space-y-3">
+    <div class="tactile-card" style="border-color: var(--accent-terra);">
+      <div class="flex items-center justify-between" style="margin-bottom: 8px; border-bottom: 1px dashed #D1D5DB; padding-bottom: 4px;">
+        <span class="font-display font-bold text-xs" style="color: var(--accent-terra);">📝 Proof Sheet Dilemma Draft</span>
+        <button type="button" id="btn-cancel-draft" class="tactile-btn" style="padding: 1px 6px; font-size: 10px;">✕ Cancel</button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div>
+          <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">Dilemma Title:</label>
+          <input type="text" id="draft-title" class="w-full font-mono p-1 border rounded" style="border: 1px solid #18181B; border-radius: 6px; padding: 4px;">
+        </div>
+        <div>
+          <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">Dilemma Prompt (The Core Tension):</label>
+          <textarea id="draft-prompt" rows="2" class="w-full font-sans p-1 border rounded" style="border: 1px solid #18181B; border-radius: 6px; padding: 4px; resize: vertical;"></textarea>
+        </div>
+
+        <div style="margin-top: 6px;">
+          <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 4px;">4 MECE Choices:</label>
+          <div class="space-y-1">
+            <div class="flex items-center gap-1">
+              <span class="font-mono font-bold text-xs" style="width: 16px; color: #C85A17;">A:</span>
+              <input type="text" id="draft-choice-a" class="w-full text-xs font-sans p-1 border rounded" style="border: 1px solid #18181B; border-radius: 4px; padding: 3px;">
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="font-mono font-bold text-xs" style="width: 16px; color: #003153;">B:</span>
+              <input type="text" id="draft-choice-b" class="w-full text-xs font-sans p-1 border rounded" style="border: 1px solid #18181B; border-radius: 4px; padding: 3px;">
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="font-mono font-bold text-xs" style="width: 16px; color: #2E7D32;">C:</span>
+              <input type="text" id="draft-choice-c" class="w-full text-xs font-sans p-1 border rounded" style="border: 1px solid #18181B; border-radius: 4px; padding: 3px;">
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="font-mono font-bold text-xs" style="width: 16px; color: #8E24AA;">D:</span>
+              <input type="text" id="draft-choice-d" class="w-full text-xs font-sans p-1 border rounded" style="border: 1px solid #18181B; border-radius: 4px; padding: 3px;">
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #D1D5DB;">
+          <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">Your Founding Vote:</label>
+          <div class="flex gap-2" id="founder-vote-strip">
+            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="founder-vote" value="A" checked> A</label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="founder-vote" value="B"> B</label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="founder-vote" value="C"> C</label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="founder-vote" value="D"> D</label>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">Moral Lens Framework:</label>
+          <select id="draft-moral-lens" class="w-full font-mono text-xs p-1 border rounded" style="border: 1px solid #18181B; border-radius: 6px; padding: 4px; background: white;">
+            <option value="AUTONOMY">[AUTONOMY] Rights & Self-Determination</option>
+            <option value="COMMUNAL_DUTY">[COMMUNAL_DUTY] Shared Responsibility</option>
+            <option value="ECONOMIC_PRAGMATISM">[ECONOMIC_PRAGMATISM] Practical Utility</option>
+            <option value="CIVIC_RECIPROCITY">[CIVIC_RECIPROCITY] Fair Play</option>
+            <option value="HARM_REDUCTION">[HARM_REDUCTION] Vulnerability Protection</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="font-mono font-bold text-gray-700 block" style="margin-bottom: 2px;">Founder Seed Perspective:</label>
+          <textarea id="draft-rationale" rows="2" class="w-full font-sans text-xs p-1 border rounded" style="border: 1px solid #18181B; border-radius: 6px; padding: 4px; resize: vertical;" placeholder="Articulate the core justification for your founding vote..."></textarea>
+        </div>
+
+        <button type="button" id="btn-publish-plot" class="tactile-btn w-full" style="padding: 8px; background: #18181B; color: white; font-size: 12px; margin-top: 8px;">
+          🚀 Publish to Global Cultural Atlas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "PLOT: Cultural Atlas & Ambient Deliberation",
+  "version": "1.0.0",
+  "description": "Ambient cultural deliberation, MECE dilemma formulation, and stance nuance for any web page, Reddit thread, or YouTube video.",
+  "permissions": [
+    "sidePanel",
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open PLOT Deliberation Panel",
+    "default_icon": {
+      "16": "icon.svg",
+      "32": "icon.svg",
+      "48": "icon.svg",
+      "128": "icon.svg"
+    }
+  },
+  "icons": {
+    "16": "icon.svg",
+    "32": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

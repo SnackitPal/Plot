@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PLOT — Chrome SidePanel Extension Test Workbench</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --ink: #18181B;
+      --paper: #FAF6EE;
+    }
+    .tactile-card {
+      border: 2px solid var(--ink);
+      box-shadow: 3px 3px 0px var(--ink);
+    }
+    .tactile-btn {
+      border: 2px solid var(--ink);
+      box-shadow: 2px 2px 0px var(--ink);
+      transition: all 0.1s ease;
+    }
+    .tactile-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px var(--ink);
+    }
+    .tactile-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px var(--ink);
+    }
+  </style>
+</head>
+<body class="bg-[#F4EFE6] text-[var(--ink)] min-h-screen p-3 sm:p-5 font-sans">
+  
+  <!-- Masthead -->
+  <div class="max-w-7xl mx-auto mb-4 tactile-card rounded-xl bg-white p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <span class="w-4 h-4 rounded-full bg-[#C85A17]"></span>
+      <div>
+        <h1 class="font-serif font-bold text-base sm:text-lg tracking-wide text-gray-900">
+          PLOT Chrome Extension Test Workbench
+        </h1>
+        <p class="font-mono text-xs text-gray-500">
+          Simulating `chrome.sidePanel` and content script metadata extraction in situ
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-2 py-1 rounded bg-amber-100 text-amber-900 font-mono text-xs font-bold border border-amber-300">
+        MV3 SidePanel Simulator
+      </span>
+      <a href="/preview/index.html" class="tactile-btn px-3 py-1 bg-white hover:bg-amber-50 text-xs font-bold rounded-lg no-underline text-inherit">
+        Back to Atlas ➔
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Split-Screen Grid -->
+  <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <!-- Left: Mock Host Browser Viewport (7 Cols) -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="tactile-card rounded-2xl bg-white p-4 sm:p-5 space-y-4">
+        
+        <!-- Mock Browser Chrome / URL Bar -->
+        <div class="space-y-2 border-b-2 border-dashed border-gray-200 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="flex gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span>
+            </div>
+            <span class="font-mono text-xs text-gray-400 font-bold ml-2">Active Tab Simulator</span>
+          </div>
+
+          <!-- Tab Selector Strip -->
+          <div class="flex gap-1.5 overflow-x-auto pt-1 pb-1" id="mock-tab-strip">
+            <button type="button" onclick="switchMockTab('reddit')" id="tab-btn-reddit" class="tactile-btn px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-amber-100 border-2 border-black">
+              🔴 r/AskEurope (Reddit)
+            </button>
+            <button type="button" onclick="switchMockTab('youtube')" id="tab-btn-youtube" class="tactile-btn px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-white">
+              ▶️ YouTube Debate
+            </button>
+            <button type="button" onclick="switchMockTab('remote')" id="tab-btn-remote" class="tactile-btn px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-white">
+              💼 Remote Work Article
+            </button>
+            <button type="button" onclick="switchMockTab('cold')" id="tab-btn-cold" class="tactile-btn px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-white">
+              🧭 New Unknown URL
+            </button>
+          </div>
+
+          <!-- URL Bar Display -->
+          <div class="flex items-center gap-2 bg-[#FAF6EE] p-2 rounded-xl border border-gray-300 font-mono text-xs">
+            <span class="text-gray-400">🔒</span>
+            <span id="mock-url-display" class="font-bold text-gray-800 truncate select-all">
+              https://reddit.com/r/AskEurope/comments/quiet_hours_debate
+            </span>
+          </div>
+        </div>
+
+        <!-- Simulated Active Page Content Container -->
+        <div id="mock-page-content" class="space-y-3 min-h-[360px] p-4 rounded-xl bg-[#FAF6EE] border border-gray-200">
+          <div class="flex items-center gap-2">
+            <span id="mock-platform-tag" class="px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase bg-red-500 text-white">REDDIT</span>
+            <span id="mock-page-author" class="font-mono text-xs text-gray-500">Posted by u/euro_wanderer 4h ago</span>
+          </div>
+          <h2 id="mock-page-title" class="font-serif font-bold text-lg leading-snug text-gray-900">
+            Should cities enforce strict quiet hours after 10 PM, or does it destroy urban nightlife?
+          </h2>
+          <p id="mock-page-body" class="text-sm text-gray-700 leading-relaxed font-sans">
+            "In many Central and Northern European cities, there is an unwritten civic code (Ruhezeit) where neighbors expect silence after 10 PM. Meanwhile, Mediterranean cities thrive between 10 PM and 2 AM. Are quiet laws a fundamental health right, or do they sterilize city life into suburban retirement villages?"
+          </p>
+          <div class="pt-3 border-t border-dashed border-gray-300 flex items-center justify-between text-xs font-mono text-gray-500">
+            <span>💬 412 Comments</span>
+            <span>📍 Location: Europe</span>
+            <span>🔗 Canonical: Normalized</span>
+          </div>
+        </div>
+
+        <!-- Workbench Controls -->
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-2">
+          <span class="font-mono text-xs font-bold text-amber-900 block">⚡ SidePanel Inspection Controller:</span>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="syncTabToSidepanel()" id="btn-sync-sidepanel" class="tactile-btn px-3 py-1.5 bg-white text-xs font-bold rounded-lg text-gray-800">
+              🔄 Send Tab Context to SidePanel
+            </button>
+            <button type="button" onclick="triggerSidepanelDraft()" id="btn-trigger-draft-external" class="tactile-btn px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg">
+              ⚡ Trigger 1-Tap Draft in SidePanel
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right: Embedded Chrome SidePanel (5 Cols - exactly ~380px wide) -->
+    <div class="lg:col-span-5 space-y-3">
+      <div class="tactile-card rounded-2xl bg-white p-3 space-y-2">
+        <div class="flex items-center justify-between border-b pb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="font-mono text-xs font-bold text-gray-800">Chrome SidePanel Container</span>
+          </div>
+          <span class="font-mono text-[11px] text-gray-400">Width: 380px (Native)</span>
+        </div>
+
+        <!-- The Embedded SidePanel iframe -->
+        <iframe
+          id="sidepanel-iframe"
+          src="/extension/sidepanel.html"
+          class="w-full rounded-xl border-2 border-[var(--ink)] bg-[#FAF6EE]"
+          style="height: 640px; box-shadow: 2px 2px 0px #18181B;"
+        ></iframe>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Tab Definitions for Testing
+    const MOCK_TABS = {
+      reddit: {
+        url: 'https://reddit.com/r/AskEurope/comments/quiet_hours_debate',
+        canonical_url: 'https://reddit.com/r/AskEurope/comments/quiet_hours_debate',
+        platform: 'REDDIT',
+        title: 'Should cities enforce strict quiet hours after 10 PM, or does it destroy urban nightlife?',
+        author_or_channel: 'u/euro_wanderer',
+        excerpt: 'In many Central and Northern European cities, there is an unwritten civic code where neighbors expect silence after 10 PM. Mediterranean cities thrive between 10 PM and 2 AM. Are quiet laws a fundamental health right, or do they sterilize city life?',
+        tag_color: 'bg-red-500',
+        comments: 412
+      },
+      youtube: {
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&feature=share&utm_source=twitter',
+        canonical_url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        platform: 'YOUTUBE',
+        title: 'The Mathematics of Civil Disobedience & Proportional Public Dissent',
+        author_or_channel: 'Veritasium & Cultural Logic',
+        excerpt: 'Exploring when public disruption is ethically justified in historical civil rights vs when it devolves into unprincipled social disruption.',
+        tag_color: 'bg-red-600',
+        comments: 1840
+      },
+      remote: {
+        url: 'https://news.ycombinator.com/item?id=38472910&ref=social_feed',
+        canonical_url: 'https://news.ycombinator.com/item?id=38472910',
+        platform: 'WORK_MOBILITY',
+        title: 'Would you accept a 30% pay cut if it guaranteed you would never have to commute again?',
+        author_or_channel: 'Hacker News Deliberation',
+        excerpt: 'Knowledge workers debate the real valuation of 10+ hours recovered transit time against compounding salary loss over a 30-year retirement horizon.',
+        tag_color: 'bg-orange-500',
+        comments: 892
+      },
+      cold: {
+        url: 'https://theatlantic.com/ideas/archive/2026/09/the-loneliness-tax-urban-solitude/678901/?utm_source=copy',
+        canonical_url: 'https://theatlantic.com/ideas/archive/2026/09/the-loneliness-tax-urban-solitude/678901',
+        platform: 'WEB',
+        title: 'The Loneliness Tax: Why Modern Hyper-Independence Costs More Than We Admit',
+        author_or_channel: 'The Atlantic Ideas',
+        excerpt: 'We traded communal family friction for micro-apartments and food delivery apps. Now a generation is discovering the hidden psychological price.',
+        tag_color: 'bg-blue-600',
+        comments: 145
+      }
+    };
+
+    let currentMockTabKey = 'reddit';
+
+    function switchMockTab(tabKey) {
+      currentMockTabKey = tabKey;
+      const tabData = MOCK_TABS[tabKey];
+      if (!tabData) return;
+
+      // Update Tab Button Styles
+      ['reddit', 'youtube', 'remote', 'cold'].forEach(k => {
+        const btn = document.getElementById(`tab-btn-${k}`);
+        if (btn) {
+          if (k === tabKey) {
+            btn.className = 'tactile-btn px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-amber-100 border-2 border-black';
+          } else {
+            btn.className = 'tactile-btn px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-white';
+          }
+        }
+      });
+
+      // Update Mock Viewport
+      document.getElementById('mock-url-display').textContent = tabData.url;
+      document.getElementById('mock-page-title').textContent = tabData.title;
+      document.getElementById('mock-page-body').textContent = `"${tabData.excerpt}"`;
+      document.getElementById('mock-page-author').textContent = `Source: ${tabData.author_or_channel}`;
+      
+      const tagEl = document.getElementById('mock-platform-tag');
+      tagEl.textContent = tabData.platform;
+      tagEl.className = `px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase text-white ${tabData.tag_color}`;
+
+      // Automatically sync to SidePanel
+      syncTabToSidepanel();
+    }
+
+    function syncTabToSidepanel() {
+      const tabData = MOCK_TABS[currentMockTabKey];
+      const iframe = document.getElementById('sidepanel-iframe');
+      if (!iframe || !iframe.contentWindow) return;
+
+      try {
+        const sideCtrl = iframe.contentWindow.__PLOT_SIDEPANEL;
+        if (sideCtrl && sideCtrl.setActiveTab) {
+          sideCtrl.setActiveTab(tabData);
+        } else {
+          // Pass via global mock object for initial load
+          iframe.contentWindow.__PLOT_MOCK_TAB = tabData;
+        }
+      } catch (e) {
+        console.warn('Sync to iframe caught:', e);
+      }
+    }
+
+    function triggerSidepanelDraft() {
+      const iframe = document.getElementById('sidepanel-iframe');
+      if (!iframe || !iframe.contentWindow) return;
+      try {
+        const sideCtrl = iframe.contentWindow.__PLOT_SIDEPANEL;
+        if (sideCtrl && sideCtrl.triggerDraft) {
+          sideCtrl.triggerDraft();
+        }
+      } catch (e) {
+        console.warn('Trigger draft caught:', e);
+      }
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        syncTabToSidepanel();
+      }, 500);
+    });
+  </script>
+</body>
+</html>

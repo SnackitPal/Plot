@@ -1,0 +1,205 @@
+/**
+ * PLOT: The Cultural Atlas — SidePanel Extension Stylesheet
+ * Tactile Neobrutalism, Archival Parchment Palette (#FAF6EE), Crisp Typography
+ */
+
+:root {
+  --ink: #18181B;
+  --paper: #FAF6EE;
+  --card-bg: #FFFFFF;
+  --accent-terra: #C85A17;
+  --accent-blue: #003153;
+  --accent-green: #2E7D32;
+  --accent-purple: #8E24AA;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+  line-height: 1.4;
+  padding: 12px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Typography */
+.font-display {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Tactile Components */
+.tactile-card {
+  background: var(--card-bg);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0px var(--ink);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.tactile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--card-bg);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0px var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.tactile-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--ink);
+}
+
+.tactile-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--ink);
+}
+
+.tactile-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 1px 1px 0px var(--ink);
+}
+
+/* Platform Badges */
+.badge-platform {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-reddit {
+  background: #FF4500;
+  color: #FFFFFF;
+}
+
+.badge-youtube {
+  background: #FF0000;
+  color: #FFFFFF;
+}
+
+.badge-substack {
+  background: #FF6719;
+  color: #FFFFFF;
+}
+
+.badge-web {
+  background: #E8F0FE;
+  color: #1967D2;
+}
+
+/* Choices Progress Fills */
+.choice-btn {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 10px;
+  background: #FFFFFF;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  box-shadow: 2px 2px 0px var(--ink);
+  transition: transform 0.1s ease;
+}
+
+.choice-btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--ink);
+}
+
+.choice-btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--ink);
+}
+
+.choice-btn.selected {
+  border-width: 3px;
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.choice-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  opacity: 0.18;
+  z-index: 1;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.choice-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.choice-pct {
+  position: relative;
+  z-index: 2;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Stance Tabs */
+.stance-tab-btn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #D1D5DB;
+  background: #FFFFFF;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stance-tab-btn.active {
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: #FFFFFF;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}

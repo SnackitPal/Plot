@@ -40,6 +40,7 @@ PORT = 8000
 WATCH_EXTENSIONS = {".html", ".css", ".js", ".json", ".svg", ".md"}
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PREVIEW_DIR = os.path.join(ROOT_DIR, "preview")
+EXTENSION_DIR = os.path.join(ROOT_DIR, "extension")
 SERVE_DIR = PREVIEW_DIR if os.path.exists(PREVIEW_DIR) else ROOT_DIR
 DB_PATH = os.path.join(ROOT_DIR, "atlas.db")
 
@@ -282,6 +283,9 @@ def extract_dilemma_draft(url: str, text_excerpt: str = "", title: str = "") -> 
             {"letter": "D", "label": "Viewer Sovereignty: Allow local viewer cohorts to set community moderation.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Decentralized Precedent"}
         ]
         category = "DIGITAL_COMMONS"
+        platform = "YOUTUBE"
+        seed_rationale = "Public expression thrives on dissent; open debate challenges dogma faster than top-down curation."
+        moral_lens = "AUTONOMY"
     elif "reddit.com" in domain or "aita" in lower_title or "relationship" in lower_text or "reddit" in lower_title:
         prompt = f"In the interpersonal tension highlighted in '{clean_title[:70]}', where should personal boundaries lie?"
         choices = [
@@ -291,6 +295,9 @@ def extract_dilemma_draft(url: str, text_excerpt: str = "", title: str = "") -> 
             {"letter": "D", "label": "Cultural Tradition: Follow established precedent and social protocol.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Cultural Precedent"}
         ]
         category = "COMMUNITY"
+        platform = "REDDIT"
+        seed_rationale = "Healthy relationships require sovereign boundaries; self-sacrifice without mutual respect leads to resentment."
+        moral_lens = "AUTONOMY"
     elif any(kw in lower_text or kw in lower_title for kw in ("work", "salary", "remote", "commute", "office", "job", "career")):
         prompt = f"Regarding workplace trade-offs discussed in '{clean_title[:70]}', how should compensation and flexibility align?"
         choices = [
@@ -300,6 +307,9 @@ def extract_dilemma_draft(url: str, text_excerpt: str = "", title: str = "") -> 
             {"letter": "D", "label": "Institutional Presence: Physical presence drives superior long-term culture.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Institutional Precedent"}
         ]
         category = "WORK_MOBILITY"
+        platform = "WORK_MOBILITY"
+        seed_rationale = "Knowledge workers deliver outcomes, not desk hours; location freedom prevents burnout."
+        moral_lens = "ECONOMIC_PRAGMATISM"
     else:
         prompt = f"In evaluating the moral tension raised in '{clean_title[:70]}', which principle takes priority?"
         choices = [
@@ -309,6 +319,9 @@ def extract_dilemma_draft(url: str, text_excerpt: str = "", title: str = "") -> 
             {"letter": "D", "label": "Institutional Stability: Respect long-standing structural precedent.", "shape_symbol": "diamond", "color_hex": "#8E24AA", "philosophical_value": "Institutional Precedent"}
         ]
         category = "CIVIC_TRUST"
+        platform = "WEB"
+        seed_rationale = "Individual liberty protects minority dissent and prevents coercive conformity."
+        moral_lens = "AUTONOMY"
 
     return {
         "title": clean_title,
@@ -317,6 +330,10 @@ def extract_dilemma_draft(url: str, text_excerpt: str = "", title: str = "") -> 
         "url_hash": url_hash,
         "category": category,
         "domain": category,
+        "platform": platform,
+        "seed_rationale": seed_rationale,
+        "moral_lens": moral_lens,
+        "author_vote": "A",
         "choices": choices
     }
 
@@ -439,7 +456,7 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 return
 
         # PWA Manifest: GET /manifest.json or /preview/manifest.json
-        if path in ("/manifest.json", "/preview/manifest.json"):
+        if path in ("/manifest.json", "/preview/manifest.json", "/preview/preview/manifest.json"):
             manifest_path = os.path.join(PREVIEW_DIR, "manifest.json")
             if os.path.exists(manifest_path):
                 with open(manifest_path, "rb") as f:
@@ -494,6 +511,66 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 self.send_header("Content-Length", str(len(content)))
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.send_header("Content-Security-Policy", "frame-ancestors *")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+        # Extension Static Files: GET /extension/*
+        if path.startswith("/extension/"):
+            rel_path = path[len("/extension/"):].lstrip("/")
+            ext_file_path = os.path.join(EXTENSION_DIR, rel_path)
+            if os.path.exists(ext_file_path) and os.path.isfile(ext_file_path):
+                content_type = "text/plain"
+                if ext_file_path.endswith(".html"):
+                    content_type = "text/html; charset=utf-8"
+                elif ext_file_path.endswith(".js"):
+                    content_type = "application/javascript; charset=utf-8"
+                elif ext_file_path.endswith(".json"):
+                    content_type = "application/json; charset=utf-8"
+                elif ext_file_path.endswith(".css"):
+                    content_type = "text/css; charset=utf-8"
+                elif ext_file_path.endswith(".svg"):
+                    content_type = "image/svg+xml"
+                elif ext_file_path.endswith(".png"):
+                    content_type = "image/png"
+
+                with open(ext_file_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+        # Preview Directory Static Files: GET /preview/*
+        if path.startswith("/preview/"):
+            rel_path = path[len("/preview/"):].lstrip("/")
+            preview_file_path = os.path.join(PREVIEW_DIR, rel_path)
+            if os.path.exists(preview_file_path) and os.path.isfile(preview_file_path):
+                content_type = "text/plain"
+                if preview_file_path.endswith(".html"):
+                    content_type = "text/html; charset=utf-8"
+                elif preview_file_path.endswith(".js"):
+                    content_type = "application/javascript; charset=utf-8"
+                elif preview_file_path.endswith(".json"):
+                    content_type = "application/json; charset=utf-8"
+                elif preview_file_path.endswith(".css"):
+                    content_type = "text/css; charset=utf-8"
+                elif preview_file_path.endswith(".svg"):
+                    content_type = "image/svg+xml"
+                elif preview_file_path.endswith(".png"):
+                    content_type = "image/png"
+
+                with open(preview_file_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
                 self.end_headers()
                 self.wfile.write(content)
