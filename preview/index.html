@@ -506,6 +506,21 @@
  <option value="TESS">TESS (tess.app) • Cleared Backup</option>
  </select>
  </div>
+ <div class="pt-2 border-t border-gray-100 space-y-1.5">
+ <div class="flex items-center justify-between text-xs font-mono font-bold">
+ <span>AI Extractor Engine:</span>
+ <select id="setting-ai-mode" onchange="updateAiExtractorMode(this.value)" class="text-xs font-mono font-bold bg-white border border-[var(--ink)] rounded px-2 py-1 cursor-pointer">
+ <option value="mode1_edge">Mode 1: Serverless Edge (Default)</option>
+ <option value="mode2_local">Mode 2: Chrome Built-in (window.ai)</option>
+ <option value="mode3_byok">Mode 3: BYOK (Personal Key)</option>
+ <option value="mode4_manual">Mode 4: Editorial Template Only</option>
+ </select>
+ </div>
+ <div id="setting-byok-container" class="hidden pt-1 space-y-1">
+ <input type="password" id="setting-byok-key" placeholder="Enter Gemini/Groq API Key..." class="w-full text-xs font-mono p-1.5 border border-gray-300 rounded bg-white" onchange="saveByokKey(this.value)" />
+ <span class="text-[9px] font-mono text-gray-500 block">Stored locally in your browser's private storage.</span>
+ </div>
+ </div>
  </div>
  </div>
 
@@ -632,6 +647,9 @@
         <span id="resolved-badge" class="hidden px-2.5 py-1 tactile-pill bg-[#C7F9CC] text-[10px] font-mono font-bold text-emerald-800">
           LOCKED IN ✓
         </span>
+        <button type="button" onclick="openEmbedModal()" id="btn-open-embed-card" class="px-2 py-0.5 tactile-pill bg-white hover:bg-amber-50 border border-gray-300 text-[10px] font-mono font-bold text-gray-700 hover:text-[var(--ink)] cursor-pointer transition-all flex items-center gap-1 shadow-2xs active:translate-y-0.5" title="Embed this interactive dilemma on your blog or forum">
+          <span>🔗 Embed</span>
+        </button>
         <!-- Epistemic Provenance Badge (OG Data Benchmark) -->
         <div id="provenance-badge-container" class="hidden flex flex-wrap items-center gap-2">
           <span class="px-2.5 py-1 tactile-pill bg-[#E8F0FE] text-[#1967D2] border border-[#AECBFA] text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
@@ -879,10 +897,15 @@
             </div>
           </div>
 
-          <!-- Share Button -->
-          <button onclick="openShareCardModal()" class="tactile-btn px-4 py-2.5 rounded-xl bg-[#008856] text-white font-display font-bold text-xs md:text-sm flex items-center gap-2">
-            <span>Share Calibration Card</span>
-          </button>
+          <!-- Actions: Share & Embed -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="openEmbedModal()" class="tactile-btn px-3.5 py-2.5 rounded-xl bg-white hover:bg-amber-50 text-[var(--ink)] font-display font-bold text-xs md:text-sm flex items-center gap-1.5 border-2 border-[var(--ink)] cursor-pointer">
+              <span>🔗 Embed Dilemma</span>
+            </button>
+            <button onclick="openShareCardModal()" class="tactile-btn px-4 py-2.5 rounded-xl bg-[#008856] text-white font-display font-bold text-xs md:text-sm flex items-center gap-2 cursor-pointer">
+              <span>Share Calibration Card</span>
+            </button>
+          </div>
         </div>
 
         <!-- Blindspots & Insight Callout -->
@@ -2891,6 +2914,73 @@
           <button type="button" onclick="closeCreatePlotModal()" class="tactile-btn px-4 py-2 bg-white text-gray-700 font-mono font-bold text-xs rounded-xl border-2 border-gray-300 cursor-pointer">Cancel</button>
           <button type="button" onclick="submitCustomPlot()" id="btn-submit-plot" class="tactile-btn px-6 py-2.5 bg-[#C85A17] text-white font-mono font-bold text-xs rounded-xl border-2 border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] flex items-center gap-1.5 cursor-pointer">
             <span>🚀 Publish Plot & Open Map</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: EMBED DILEMMA WIDGET CODE GENERATOR -->
+  <!-- ======================================================== -->
+  <div id="embed-dilemma-modal" class="fixed inset-0 bg-black/75 z-[999] flex items-end md:items-center justify-center p-0 md:p-4 hidden" onclick="if(event.target === this) closeEmbedModal()">
+    <div class="tactile-card w-full max-w-xl bg-[#FAF6EE] p-4 sm:p-6 rounded-t-3xl md:rounded-2xl border-2 border-[var(--ink)] space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl relative">
+      <div class="flex items-center justify-between border-b-2 border-dashed border-gray-300 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-full bg-[#18181B] text-white flex items-center justify-center text-sm font-mono font-bold">🔗</span>
+          <div>
+            <h3 class="font-display font-bold text-lg text-[var(--ink)]">Embed Dilemma Widget</h3>
+            <p class="text-[11px] font-mono text-gray-600">Embed this interactive 4-choice dilemma into any Substack, blog, or forum.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeEmbedModal()" class="tactile-btn w-8 h-8 rounded-full bg-white border-2 border-[var(--ink)] font-mono font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <!-- Customization Options -->
+      <div class="grid grid-cols-2 gap-3 p-3 bg-white rounded-xl border-2 border-[var(--ink)] text-xs font-mono">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Theme Palette:</label>
+          <select id="embed-cfg-theme" onchange="updateEmbedSnippet()" class="w-full p-1.5 border border-gray-300 rounded font-mono font-bold bg-[#FAF6EE]">
+            <option value="parchment">Archival Parchment (#FAF6EE)</option>
+            <option value="light">Crisp Light (#FFFFFF)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Regional Consensus Strip:</label>
+          <select id="embed-cfg-map" onchange="updateEmbedSnippet()" class="w-full p-1.5 border border-gray-300 rounded font-mono font-bold bg-[#FAF6EE]">
+            <option value="1">Show Mini Map (Recommended)</option>
+            <option value="0">Hide Mini Map</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Interactive Iframe Preview -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between text-xs font-mono font-bold text-gray-600">
+          <span>Live Interactive Preview:</span>
+          <span class="text-[10px] text-emerald-700 font-bold">● Zero-Scroll Auto Height</span>
+        </div>
+        <div class="w-full bg-[#F4EFE6] p-2 rounded-xl border-2 border-[var(--ink)] overflow-hidden flex justify-center">
+          <iframe id="embed-preview-iframe" src="/embed?id=q_01&theme=parchment" width="100%" height="340" style="border: 2px solid #18181B; border-radius: 12px; background: white;" frameborder="0"></iframe>
+        </div>
+      </div>
+
+      <!-- HTML Embed Code Snippet -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between text-xs font-mono font-bold text-gray-700">
+          <span>HTML Embed Code:</span>
+          <span class="text-[10px] text-gray-500">Paste directly into your CMS or HTML editor</span>
+        </div>
+        <textarea id="embed-code-textarea" readonly rows="3" class="w-full p-2.5 font-mono text-[11px] bg-white border-2 border-[var(--ink)] rounded-xl focus:outline-none select-all"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+        <span id="embed-copy-status" class="text-xs font-mono font-bold text-emerald-800"></span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeEmbedModal()" class="tactile-btn px-4 py-2 bg-white text-gray-700 font-mono font-bold text-xs rounded-xl border-2 border-gray-300 cursor-pointer">Close</button>
+          <button type="button" onclick="copyEmbedCode()" id="btn-copy-embed" class="tactile-btn px-5 py-2 bg-[#C85A17] text-white font-mono font-bold text-xs rounded-xl border-2 border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] flex items-center gap-1.5 cursor-pointer">
+            <span>📋 Copy Embed Code</span>
           </button>
         </div>
       </div>
@@ -7556,6 +7646,86 @@ async function goToStep(stepIndex) {
       }
     }
   }
+
+  // ========================================================
+  // EMBED DILEMMA MODAL & TRI-MODAL EXTRACTOR INTEGRATION
+  // ========================================================
+  function openEmbedModal(questionId = null) {
+    playClickSound(520);
+    const qId = questionId || (questions[currentStep - 1]?.id) || 'q_01';
+    const modal = document.getElementById('embed-dilemma-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      updateEmbedSnippet(qId);
+    }
+  }
+
+  function closeEmbedModal() {
+    playClickSound(380);
+    const modal = document.getElementById('embed-dilemma-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function updateEmbedSnippet(overrideQId = null) {
+    const qId = overrideQId || (questions[currentStep - 1]?.id) || 'q_01';
+    const theme = document.getElementById('embed-cfg-theme')?.value || 'parchment';
+    const map = document.getElementById('embed-cfg-map')?.value || '1';
+    const origin = window.location.origin || 'http://localhost:8000';
+    
+    const embedUrl = `${origin}/embed?id=${encodeURIComponent(qId)}&theme=${theme}&map=${map}`;
+    const iframe = document.getElementById('embed-preview-iframe');
+    if (iframe) iframe.src = embedUrl;
+
+    const snippet = `<iframe src="${embedUrl}" width="100%" height="480" frameborder="0" style="border: 2px solid #18181B; border-radius: 14px; max-width: 640px; width: 100%; box-shadow: 4px 4px 0px #18181B;" allow="clipboard-write"></iframe>\n<script src="${origin}/embed.js" async><\/script>`;
+    
+    const textarea = document.getElementById('embed-code-textarea');
+    if (textarea) textarea.value = snippet;
+  }
+
+  async function copyEmbedCode() {
+    playClickSound(620);
+    const textarea = document.getElementById('embed-code-textarea');
+    const statusEl = document.getElementById('embed-copy-status');
+    if (!textarea) return;
+
+    try {
+      await navigator.clipboard.writeText(textarea.value);
+      if (statusEl) {
+        statusEl.textContent = '✓ Copied embed snippet to clipboard!';
+        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3500);
+      }
+    } catch (err) {
+      textarea.select();
+      document.execCommand('copy');
+      if (statusEl) {
+        statusEl.textContent = '✓ Copied embed snippet to clipboard!';
+        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3500);
+      }
+    }
+  }
+
+  function updateAiExtractorMode(mode) {
+    localStorage.setItem('plot_ai_extractor_mode', mode);
+    const byokContainer = document.getElementById('setting-byok-container');
+    if (byokContainer) {
+      if (mode === 'mode3_byok') byokContainer.classList.remove('hidden');
+      else byokContainer.classList.add('hidden');
+    }
+  }
+
+  function saveByokKey(key) {
+    localStorage.setItem('plot_byok_api_key', (key || '').trim());
+  }
+
+  // Auto-Height PostMessage Listener for In-Page Embed Previews
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'plot:resize' && typeof e.data.height === 'number') {
+      const previewFrame = document.getElementById('embed-preview-iframe');
+      if (previewFrame && previewFrame.contentWindow === e.source) {
+        previewFrame.style.height = Math.max(280, Math.min(e.data.height, 800)) + 'px';
+      }
+    }
+  });
 
  // Hydrate application state and 30-day calendar on DOM load
  async function initSlateAndCalendar() {

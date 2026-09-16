@@ -468,6 +468,37 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(content)
                 return
 
+        # Embed Script: GET /embed.js or /preview/embed.js
+        if path in ("/embed.js", "/preview/embed.js"):
+            embed_js_path = os.path.join(PREVIEW_DIR, "embed.js")
+            if os.path.exists(embed_js_path):
+                with open(embed_js_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/javascript; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+        # Standalone Dilemma Embed: GET /embed, /embed/{id}, or /preview/embed.html
+        if path in ("/embed", "/preview/embed", "/preview/embed.html") or path.startswith("/embed/"):
+            embed_html_path = os.path.join(PREVIEW_DIR, "embed.html")
+            if os.path.exists(embed_html_path):
+                with open(embed_html_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Security-Policy", "frame-ancestors *")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         # Adaptive MAB Discovery: GET /api/questions/discover
         if path == "/api/questions/discover":
             query_params = urllib.parse.parse_qs(parsed_url.query)
@@ -560,7 +591,8 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 tier_filter = query_params.get("tier", ["all"])[0]
                 mode = query_params.get("mode", ["community"])[0]
                 cartogram_data = compute_cartogram_payload(question_id, db, tier_filter=tier_filter, mode=mode)
-                self._send_json(200, {"status": "ok", "cartogram": cartogram_data})
+                q_info = db.get_question(question_id)
+                self._send_json(200, {"status": "ok", "cartogram": cartogram_data, "question": q_info})
                 return
 
         # 8b. REST API: GET /api/aggregates/:question_id
@@ -674,7 +706,11 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                 query_params = urllib.parse.parse_qs(parsed_url.query)
                 viewer_stance = query_params.get("viewer_stance", [None])[0]
                 dossier = db.get_perspectives_by_stance(question_id, viewer_stance=viewer_stance)
-                self._send_json(200, {"status": "ok", "stance_dossier": dossier})
+                self._send_json(200, {
+                    "status": "ok",
+                    "stance_dossier": dossier,
+                    "perspectives_by_stance": dossier.get("bays", {})
+                })
                 return
 
         # 9. REST API: GET /api/perspectives/:question_id/cohorts
@@ -1163,6 +1199,31 @@ class AtlasRequestHandler(SimpleHTTPRequestHandler):
                     mark_perspectives_dirty(row["question_id"])
 
             self._send_json(200, rate_res)
+            return
+
+        # 3c. REST API: POST /api/perspectives/rate_coherence
+        if path == "/api/perspectives/rate_coherence":
+            body = self._read_json_body()
+            if not body:
+                self._send_json(400, {"status": "error", "message": "Invalid JSON body"})
+                return
+
+            perspective_id = body.get("perspective_id")
+            rater_salt = (body.get("rater_salt") or "").strip() or f"embed_rater_{uuid.uuid4().hex[:6]}"
+            rater_choice = body.get("rater_choice", "A")
+            eval_type = (body.get("eval_type") or "FAIR_STEELMAN").strip().upper()
+
+            if not perspective_id:
+                self._send_json(400, {"status": "error", "message": "Missing perspective_id"})
+                return
+
+            rate_res = db.rate_perspective_coherence(perspective_id, rater_salt, rater_choice, eval_type)
+            with db._get_connection() as conn:
+                row = conn.execute("SELECT question_id FROM perspectives WHERE perspective_id = ?;", (perspective_id,)).fetchone()
+                if row:
+                    mark_perspectives_dirty(row["question_id"])
+
+            self._send_json(200, {"status": "ok", "result": rate_res})
             return
 
         # REST API: POST /api/plots/extract-draft
